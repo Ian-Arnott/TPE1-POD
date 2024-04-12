@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
+
+package airport;
+
+service AdminAirportService {
+  rpc AddSector(AddSectorRequest) returns(google.protobuf.BoolValue);
+}
+
+message AddSectorRequest {
+  string sectorName = 1;
+}

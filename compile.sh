@@ -12,12 +12,12 @@ cp "$client_dir/tpe1-g8-client-2024.1Q-bin.tar.gz" "$tmp/"
 cd "$tmp"
 
 tar -xzf "tpe1-g8-server-2024.1Q-bin.tar.gz"
-chmod +x tpe1-g8-server-2024.1Q/run-server
+chmod +x tpe1-g8-server-2024.1Q/run-server.sh
 sed -i -e 's/\r$//' tpe1-g8-server-2024.1Q/*.sh
 rm "tpe1-g8-server-2024.1Q-bin.tar.gz"
 
 
 tar -xzf "tpe1-g8-client-2024.1Q-bin.tar.gz"
-chmod +x tpe1-g8-client-2024.1Q/*Client
+chmod +x tpe1-g8-client-2024.1Q/*Client.sh
 sed -i -e 's/\r$//' tpe1-g8-client-2024.1Q/*.sh
 rm "tpe1-g8-client-2024.1Q-bin.tar.gz"
