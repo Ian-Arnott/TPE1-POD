@@ -7,8 +7,21 @@ package airport;
 
 service AdminAirportService {
   rpc AddSector(AddSectorRequest) returns(google.protobuf.BoolValue);
+  rpc AddCounters(AddCountersRequest) returns(google.protobuf.BoolValue);
+  rpc Manifest(stream ManifestRequest) returns(stream google.protobuf.BoolValue);
 }
 
 message AddSectorRequest {
   string sectorName = 1;
+}
+
+message AddCountersRequest {
+  string sectorName = 1;
+  int32 counterCount = 2;
+}
+
+message ManifestRequest {
+  string booking = 1;
+  string flight = 2;
+  string airline = 3;
 }
