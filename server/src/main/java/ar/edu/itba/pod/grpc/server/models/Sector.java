@@ -1,15 +1,18 @@
 package ar.edu.itba.pod.grpc.server.models;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Sector {
     private final String name;
     // una lista counters, los counters son representados con numeros enteros
     private final Map<Integer, Counter> counterMap;
+    private final AtomicInteger lastCounter;
 
-    public Sector(String name, Map<Integer, Counter> counterMap) {
+    public Sector(String name, Map<Integer, Counter> counterMap, AtomicInteger lastCounter) {
         this.name = name;
         this.counterMap = counterMap;
+        this.lastCounter = lastCounter;
     }
 
 

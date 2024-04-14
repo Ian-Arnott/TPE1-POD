@@ -13,7 +13,7 @@ public class AdminAirportService extends AdminAirportServiceGrpc.AdminAirportSer
     }
 
     @Override
-    public void addCounters(AddCountersRequest request, StreamObserver<BoolValue> responseObserver) {
+    public void addCounters(AddCountersRequest request, StreamObserver<AddCountersResponse> responseObserver) {
         super.addCounters(request, responseObserver);
     }
 
