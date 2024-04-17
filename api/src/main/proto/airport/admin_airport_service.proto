@@ -27,8 +27,7 @@ message ManifestRequest {
 }
 
 message AddCountersResponse {
-  int32 countersAdded = 1;
-  int32 firstCounter = 2;
+  int32 lastCounterAdded = 1;
 }
 
 message ManifestResponse {

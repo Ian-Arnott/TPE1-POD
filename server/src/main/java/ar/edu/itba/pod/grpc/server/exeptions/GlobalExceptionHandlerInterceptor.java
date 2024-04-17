@@ -37,7 +37,9 @@ public class GlobalExceptionHandlerInterceptor implements ServerInterceptor {
         }
 
         private final Map<Class<? extends Throwable>, Code> errorCodesByException = Map.of(
-
+                SectorAlreadyExistsException.class, Code.ALREADY_EXISTS,
+                SectorDoesNotExistsException.class, Code.NOT_FOUND,
+                NonPositiveCounterException.class, Code.INVALID_ARGUMENT
         );
 
         private void handleException(RuntimeException exception, ServerCall<T, R> serverCall, Metadata headers) {

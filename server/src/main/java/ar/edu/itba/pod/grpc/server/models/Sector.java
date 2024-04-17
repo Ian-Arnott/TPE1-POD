@@ -1,20 +1,26 @@
 package ar.edu.itba.pod.grpc.server.models;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Sector {
     private final String name;
     // una lista counters, los counters son representados con numeros enteros
     private final Map<Integer, Counter> counterMap;
-    private final AtomicInteger lastCounter;
 
-    public Sector(String name, Map<Integer, Counter> counterMap, AtomicInteger lastCounter) {
+    public Sector(String name) {
         this.name = name;
-        this.counterMap = counterMap;
-        this.lastCounter = lastCounter;
+        this.counterMap = new ConcurrentHashMap<>();
     }
 
+
+    public synchronized AtomicInteger addCounters(AtomicInteger lastCounterAdded, int counterAmount) {
+        for (int i = 0; i < counterAmount; i++) {
+            counterMap.put(lastCounterAdded.getAndIncrement(), new Counter());
+        }
+        return lastCounterAdded;
+    }
 
     // al mostrar los sectores en el servant de servicio de reservas,
     // hay que devolver un string con los counters
