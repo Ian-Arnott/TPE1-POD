@@ -20,9 +20,7 @@ public class ManifestResponseFutureCallback extends AbstractFutureCallback<Admin
 
     @Override
     public void onSuccess(AdminAirportServiceOuterClass.ManifestResponse result) {
-        String response = String.format("""
-                Booking %s for %s %s %s
-                """,booking,flight,airline, result.getMessage());
+        String response = String.format("Booking %s for %s %s %s",booking,flight,airline, result.getMessage());
         System.out.println(response);
         getLatch().countDown();
     }

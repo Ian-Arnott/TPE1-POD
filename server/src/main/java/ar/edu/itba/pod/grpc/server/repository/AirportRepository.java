@@ -10,8 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class AirportRepository {
     private static AirportRepository instance;
-    private static BookingRepository bookingRepository = BookingRepository.getInstance();
-
+    private static final BookingRepository bookingRepository = BookingRepository.getInstance();
     private final ConcurrentMap<String, Sector> sectorConcurrentMap;
     private AtomicInteger lastCounterAdded;
 
@@ -20,7 +19,7 @@ public class AirportRepository {
         lastCounterAdded = new AtomicInteger(0);
     }
 
-    public static AirportRepository getInstance() {
+    public synchronized static AirportRepository getInstance() {
         if (instance == null) {
             instance = new AirportRepository();
         }

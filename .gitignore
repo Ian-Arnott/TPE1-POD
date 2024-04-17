@@ -15,3 +15,5 @@ buildNumber.properties
 *.txt
 
 tmp/
+
+*.csv
