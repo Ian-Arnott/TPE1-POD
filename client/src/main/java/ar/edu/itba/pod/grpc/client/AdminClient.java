@@ -2,6 +2,8 @@ package ar.edu.itba.pod.grpc.client;
 
 import airport.AdminAirportServiceGrpc;
 import ar.edu.itba.pod.grpc.client.utils.ClientArgs;
+import ar.edu.itba.pod.grpc.client.utils.callback.AddCountersResponseFutureCallback;
+import ar.edu.itba.pod.grpc.client.utils.callback.AddSectorResponseFutureCallback;
 import ar.edu.itba.pod.grpc.client.utils.callback.BoolValueFutureCallback;
 import ar.edu.itba.pod.grpc.client.utils.callback.ManifestResponseFutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -53,10 +55,21 @@ public class AdminClient {
                         .setSectorName(sectorName)
                         .build();
                 ListenableFuture<BoolValue> listenableFuture = stub.addSector(addSectorRequest);
-                Futures.addCallback(listenableFuture, new BoolValueFutureCallback(logger,latch,couldAdd,couldNotAdd), Runnable::run);
+                Futures.addCallback(listenableFuture, new AddSectorResponseFutureCallback(logger, latch, sectorName), Runnable::run);
             }
             case "addCounters" -> {
-                // do stuff
+                final String sectorName = argMap.get(ClientArgs.SECTOR.getValue());
+                final String countersArg = argMap.get(ClientArgs.COUNTERS.getValue());
+                checkNullArgs(sectorName, "Sector Name Not Specified");
+                checkNullArgs(countersArg, "Counters Amount Not Specified");
+                final int counters = Integer.parseInt(countersArg);
+                latch = new CountDownLatch(1);
+                AddCountersRequest countersRequest = AddCountersRequest.newBuilder()
+                        .setSectorName(sectorName)
+                        .setCounterCount(counters)
+                        .build();
+                ListenableFuture<AddCountersResponse> listenableFuture = stub.addCounters(countersRequest);
+                Futures.addCallback(listenableFuture, new AddCountersResponseFutureCallback(logger, latch, sectorName, counters), Runnable::run);
             }
             case "manifest" -> {
                 final String inPath = argMap.get(ClientArgs.IN_PATH.getValue());

@@ -24,10 +24,4 @@ public class ManifestResponseFutureCallback extends AbstractFutureCallback<Admin
         System.out.println(response);
         getLatch().countDown();
     }
-
-    @Override
-    public void onFailure(Throwable t) {
-        System.out.println("Booking " + booking + " for flight " + flight + " failed");
-        super.onFailure(t);
-    }
 }

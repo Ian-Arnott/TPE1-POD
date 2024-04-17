@@ -11,8 +11,6 @@ public class BookingRepository {
 
     private static BookingRepository instance;
     private static AirportRepository airportRepository = AirportRepository.getInstance();
-    private static final String lock = "lock";
-
     private final Map<String, Map<String,String>> bookings;
     private final Map<String, String> flights;
     private BookingRepository() {

@@ -15,13 +15,20 @@ public class AdminAirportService extends AdminAirportServiceGrpc.AdminAirportSer
 
     @Override
     public void addSector(AddSectorRequest request, StreamObserver<BoolValue> responseObserver) {
-        super.addSector(request, responseObserver);
+        boolean response = repository.addSector(request.getSectorName());
+        responseObserver.onNext(BoolValue.of(response));
+        responseObserver.onCompleted();
     }
 
     @Override
     public void addCounters(AddCountersRequest request, StreamObserver<AddCountersResponse> responseObserver) {
-        super.addCounters(request, responseObserver);
+        int lastCounterAdded = repository.addCountersToSector(request.getSectorName(), request.getCounterCount());
+        responseObserver.onNext(
+            AddCountersResponse.newBuilder().setLastCounterAdded(lastCounterAdded).build()
+        );
+        responseObserver.onCompleted();
     }
+
 
     @Override
     public void manifest(ManifestRequest request, StreamObserver<ManifestResponse> responseObserver) {

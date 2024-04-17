@@ -25,8 +25,8 @@ public abstract class AbstractFutureCallback<V> implements FutureCallback<V> {
 
     @Override
     public void onFailure(Throwable t) {
+        System.out.println(t.getMessage());
         latch.countDown();
-        logger.error(t.getMessage());
     }
 
     public Logger getLogger() {
