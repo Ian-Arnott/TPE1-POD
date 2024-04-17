@@ -16,7 +16,7 @@ public class Server {
     private static Logger logger = LoggerFactory.getLogger(Server.class);
 
     private static final Function<BindableService, ServerServiceDefinition> handler =
-            serivce -> ServerInterceptors.intercept(serivce, new GlobalExceptionHandlerInterceptor());
+            service -> ServerInterceptors.intercept(service, new GlobalExceptionHandlerInterceptor());
 
     public static void main(String[] args) throws InterruptedException, IOException {
         logger.info(" Server Starting ...");
