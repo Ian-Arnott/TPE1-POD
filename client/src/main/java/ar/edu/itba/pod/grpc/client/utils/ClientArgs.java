@@ -5,6 +5,7 @@ public enum ClientArgs {
     ACTION("action"),
     SECTOR("sector"),
     IN_PATH("inPath"),
+    COUNTERS("counters"),
     COUNTER_FROM("counterFrom"),
     COUNTER_TO("counterTo"),
     FLIGHTS("flights"),

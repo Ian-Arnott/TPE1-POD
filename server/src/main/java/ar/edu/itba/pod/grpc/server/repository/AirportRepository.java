@@ -51,7 +51,8 @@ public class AirportRepository {
         return lastCounterAdded.get();
     }
 
-    public AdminAirportServiceOuterClass.ManifestResponse manifest(ManifestRequestModel requestModel) {
-        return bookingRepository.manifest(requestModel.getBooking(),requestModel.getFlight(),requestModel.getAirline());
+    public void manifest(ManifestRequestModel requestModel) {
+        bookingRepository.manifest(requestModel.getBooking(), requestModel.getFlight(), requestModel.getAirline());
+
     }
 }

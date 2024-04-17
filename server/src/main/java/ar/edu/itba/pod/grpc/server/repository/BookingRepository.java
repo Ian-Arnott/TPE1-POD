@@ -1,6 +1,8 @@
 package ar.edu.itba.pod.grpc.server.repository;
 
 import airport.AdminAirportServiceOuterClass;
+import ar.edu.itba.pod.grpc.server.exeptions.BookingAlreadyExistsException;
+import ar.edu.itba.pod.grpc.server.exeptions.FlightExistsForOtherAirlineException;
 import ar.edu.itba.pod.grpc.server.models.requests.ManifestRequestModel;
 
 import java.util.HashMap;
@@ -25,16 +27,16 @@ public class BookingRepository {
         return instance;
     }
 
-    public AdminAirportServiceOuterClass.ManifestResponse manifest(String booking, String flight, String airline) {
+    public void manifest(String booking, String flight, String airline) {
         if (this.bookings.containsKey(booking)) {
-            return AdminAirportServiceOuterClass.ManifestResponse
-                    .newBuilder().setMessage("not added: Booking " + booking + " already exists").build();
+            throw new BookingAlreadyExistsException(booking, flight, airline);
+            //return AdminAirportServiceOuterClass.ManifestResponse.newBuilder().setMessage("not added: Booking " + booking + " already exists").build();
         } else {
             if (this.flights.containsKey(flight)) {
                 String flightAirline = this.flights.get(flight);
                 if (!flightAirline.equals(airline)) {
-                    return AdminAirportServiceOuterClass.ManifestResponse
-                            .newBuilder().setMessage("not added: Flight " + flight + " belongs to a different airline").build();
+                    throw new FlightExistsForOtherAirlineException(flight);
+                    //return AdminAirportServiceOuterClass.ManifestResponse.newBuilder().setMessage("not added: Flight " + flight + " belongs to a different airline").build();
                 }
             } else {
                 this.flights.put(flight, airline);
@@ -42,8 +44,6 @@ public class BookingRepository {
 
             this.bookings.put(booking, new ConcurrentHashMap<>());
             this.bookings.get(booking).put(flight,airline);
-            return AdminAirportServiceOuterClass.ManifestResponse
-                    .newBuilder().setMessage("Booking " + booking + " added successfully").build();
         }
     }
 
