@@ -4,6 +4,8 @@ server_dir="server/target"
 client_dir="client/target"
 tmp="tmp"
 
+
+rm -rf "$tmp"
 mvn clean install
 mkdir -p "$tmp"
 

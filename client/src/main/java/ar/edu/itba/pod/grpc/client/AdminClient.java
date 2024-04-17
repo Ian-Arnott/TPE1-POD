@@ -3,6 +3,7 @@ package ar.edu.itba.pod.grpc.client;
 import airport.AdminAirportServiceGrpc;
 import ar.edu.itba.pod.grpc.client.utils.ClientArgs;
 import ar.edu.itba.pod.grpc.client.utils.callback.BoolValueFutureCallback;
+import ar.edu.itba.pod.grpc.client.utils.callback.ManifestResponseFutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.BoolValue;
@@ -11,9 +12,9 @@ import io.grpc.ManagedChannelBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import airport.AdminAirportServiceOuterClass.*;
@@ -57,6 +58,21 @@ public class AdminClient {
             case "addCounters" -> {
                 // do stuff
             }
+            case "manifest" -> {
+                final String inPath = argMap.get(ClientArgs.IN_PATH.getValue());
+                checkNullArgs(inPath, "Input Path Not Specified");
+
+                List<String[]> csvData = getCSVData(inPath);
+                latch = new CountDownLatch(csvData.size());
+                for (String[] data : csvData) {
+                    ListenableFuture<ManifestResponse> listenableFuture;
+                    ManifestRequest manifestRequest = ManifestRequest.newBuilder().setBooking(data[0])
+                            .setFlight(data[1]).setAirline(data[2]).build();
+                    listenableFuture = stub.manifest(manifestRequest);
+                    Futures.addCallback(listenableFuture,
+                            new ManifestResponseFutureCallback(logger,latch,data[0],data[1],data[2]), Runnable::run);
+                }
+            }
         }
 
         try {
@@ -65,8 +81,6 @@ public class AdminClient {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             logger.error(e.getMessage());
-        } finally {
-            channel.shutdown().awaitTermination(10, TimeUnit.SECONDS);
         }
     }
 }
