@@ -4,8 +4,12 @@ public enum ClientArgs {
     SERVER_ADDRESS("serverAddress"),
     ACTION("action"),
     SECTOR("sector"),
-    COUNTERS("counters"),
-    IN_PATH("inPath"),;
+    IN_PATH("inPath"),
+    COUNTER_FROM("counterFrom"),
+    COUNTER_TO("counterTo"),
+    FLIGHTS("flights"),
+    AIRLINE("airline"),
+    COUNTER_COUNT("counterCount");
 
     private final String value;
     ClientArgs(String value) {

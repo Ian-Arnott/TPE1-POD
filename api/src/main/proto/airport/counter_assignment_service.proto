@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
+
+package airport;
+
+service CounterAssignmentService {
+  rpc ListSectors(google.protobuf.Empty) returns(ListSectorsResponse);
+}
+
+message ListSectorsResponse {
+  string message = 1;
+}
