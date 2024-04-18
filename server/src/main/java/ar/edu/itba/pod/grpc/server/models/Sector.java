@@ -22,6 +22,10 @@ public class Sector {
         return lastCounterAdded;
     }
 
+    public synchronized Map<Integer, Counter> getCounterMap() {
+        return counterMap;
+    }
+
     // al mostrar los sectores en el servant de servicio de reservas,
     // hay que devolver un string con los counters
     // me fijo que la diferencia entre un counter y el siguiente sea < 1 y si lo es

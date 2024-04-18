@@ -1,15 +1,11 @@
 package ar.edu.itba.pod.grpc.server.repository;
 
-import airport.AdminAirportServiceOuterClass;
 import ar.edu.itba.pod.grpc.server.exeptions.BookingAlreadyExistsException;
 import ar.edu.itba.pod.grpc.server.exeptions.FlightExistsForOtherAirlineException;
 import ar.edu.itba.pod.grpc.server.models.Airline;
 import ar.edu.itba.pod.grpc.server.models.Booking;
 import ar.edu.itba.pod.grpc.server.models.Flight;
-import ar.edu.itba.pod.grpc.server.models.requests.ManifestRequestModel;
 
-import java.awt.print.Book;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -22,6 +18,7 @@ public class BookingRepository {
     private final ConcurrentMap<String, Airline> airlines;
     private final ConcurrentMap<String, Flight> flightConcurrentMap;
     private final ConcurrentMap<String, Booking> bookingConcurrentMap;
+
     private BookingRepository() {
         this.airlines = new ConcurrentHashMap<>();
         this.flightConcurrentMap = new ConcurrentHashMap<>();
@@ -58,5 +55,46 @@ public class BookingRepository {
         flightConcurrentMap.putIfAbsent(flight, existingFlight);
         airlines.putIfAbsent(airline, existingAirline);
         bookingConcurrentMap.put(booking, newBooking);
+    }
+
+    public boolean containsFlight(String flight) {
+        return flightConcurrentMap.containsKey(flight);
+    }
+
+
+    public boolean flightDoesNotHasBookings(String flight) {
+        return flightConcurrentMap.get(flight).getBookings().isEmpty();
+    }
+
+    public String getFlightAirline(String flight) {
+        return flightConcurrentMap.get(flight).getAirline().getCode();
+    }
+
+    public boolean flightIsPending(String flight) {
+        return flightConcurrentMap.get(flight).getPending().get();
+    }
+
+    public boolean flightIsCheckingIn(String flight) {
+        return flightConcurrentMap.get(flight).getCheckingIn().get();
+    }
+
+    public boolean flightCheckedIn(String flight) {
+        return flightConcurrentMap.get(flight).getCheckedIn().get();
+    }
+
+    public Flight getFlight(String flight) {
+        return flightConcurrentMap.get(flight);
+    }
+
+    public ConcurrentMap<String, Flight> getFlightConcurrentMap() {
+        return flightConcurrentMap;
+    }
+
+    public int getPendingFlights(String sectorName) {
+        int counter = 0;
+        for (Map.Entry<String, Flight> entry : flightConcurrentMap.entrySet()) {
+            if (entry.getValue().getPending().get() && entry.getValue().getPendingSector().equals(sectorName)) counter++;
+        }
+        return counter;
     }
 }
