@@ -110,7 +110,7 @@ public class AirportRepository {
             for (Flight flight : flightQueue) {
                 flight.getCheckingIn().set(true);
             }
-            return new CounterRangeAssignmentResponseModel(requestModel.getCountVal(), count
+            return new CounterRangeAssignmentResponseModel(requestModel.getCountVal(), availableCounters.getLast()
                     , 0,0);
         }
     }
@@ -119,6 +119,7 @@ public class AirportRepository {
         List<Integer> availableCounters = new ArrayList<>();
         for (Map.Entry<Integer, Counter> entry : counterMap.entrySet()) {
             if (!entry.getValue().getIsCheckingIn().get()) {
+                System.out.println(entry);
                 availableCounters.add(entry.getKey());
             } else {
                 availableCounters.clear();
