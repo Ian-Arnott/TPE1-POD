@@ -1,5 +1,7 @@
 package ar.edu.itba.pod.grpc.server.models;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,8 +24,33 @@ public class Sector {
         return lastCounterAdded;
     }
 
-    public Map<Integer, Counter> getCounterMap() {
-        return counterMap;
+    public List<int[]> getCounterList() {
+        List<int[]> counterList = new ArrayList<>();
+
+        ArrayList<int[]> intervals = new ArrayList<>();
+        var ref = new Object() {
+            boolean flag = true;
+            int start;
+            int count = 0;
+            int oldCounterNum = -1;
+        };
+
+        counterMap.forEach((counterNum, counter) -> {
+            if (ref.flag) {
+                ref.start = counterNum;
+                ref.flag = false;
+            }
+            if (counterNum == ref.oldCounterNum + 1) {
+                ref.count++;
+            } else {
+                counterList.add(new int[] {ref.start, ref.count});
+                ref.start = counterNum;
+                ref.count = 0;
+            }
+            ref.oldCounterNum = counterNum;
+        });
+
+        return counterList;
     }
 
     // al mostrar los sectores en el servant de servicio de reservas,

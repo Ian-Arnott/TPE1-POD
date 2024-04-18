@@ -1,7 +1,7 @@
 package ar.edu.itba.pod.grpc.server.repository;
 
 import airport.AdminAirportServiceOuterClass;
-import airport.CounterAssignmentServiceOuterClass;
+import counter.CounterAssignmentServiceOuterClass;
 import ar.edu.itba.pod.grpc.server.exeptions.NonPositiveCounterException;
 import ar.edu.itba.pod.grpc.server.exeptions.SectorAlreadyExistsException;
 import ar.edu.itba.pod.grpc.server.exeptions.SectorDoesNotExistsException;
@@ -10,7 +10,9 @@ import ar.edu.itba.pod.grpc.server.models.requests.ManifestRequestModel;
 import com.google.protobuf.Empty;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -64,25 +66,10 @@ public class AirportRepository {
             // TODO: Implement
         }
 
-        CounterAssignmentServiceOuterClass.ListSectorsResponse.Builder builder =
-                CounterAssignmentServiceOuterClass.ListSectorsResponse.newBuilder();
-        List<Integer> counterRangeStart = new ArrayList<>();
-        List<Integer> counterRangeSize = new ArrayList<>();
-        var ref = new Object() {
-            int i = 0;
-        };
+        Map<String, List<int[]>> response = new HashMap<>();
 
-        sectorMap.forEach((name, sector) -> {
-            sector.getCounterMap().forEach((start, counter) -> {
-                counterRangeStart.add(start);
-                builder.setCounterRangeStart(ref.i, start);
-                counterRangeSize.add(1);
-                builder.setCounterRangeStart(ref.i++, 1);
-            });
+        sectorMap.forEach((sectorName, sector) -> response.put(sectorName, sector.getCounterList()));
 
-            builder.setSectorName(name);
-        });
-
-        return builder.build();
+        return CounterAssignmentServiceOuterClass.ListSectorsResponse.newBuilder().setSectorName("A").setCounterRangeStart(1, 1).setCounterRangeSize(1, 3).build();
     }
 }

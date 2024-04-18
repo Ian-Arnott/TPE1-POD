@@ -1,7 +1,7 @@
 package ar.edu.itba.pod.grpc.server.services;
 
-import airport.CounterAssignmentServiceGrpc;
-import airport.CounterAssignmentServiceOuterClass;
+import counter.CounterAssignmentServiceGrpc;
+import counter.CounterAssignmentServiceOuterClass;
 import ar.edu.itba.pod.grpc.server.repository.AirportRepository;
 import com.google.protobuf.Empty;
 import io.grpc.stub.StreamObserver;
@@ -14,6 +14,8 @@ public class CounterAssignmentService extends CounterAssignmentServiceGrpc.Count
 
     @Override
     public void listSectors(Empty request, StreamObserver<CounterAssignmentServiceOuterClass.ListSectorsResponse> responseObserver) {
-        super.listSectors(request, responseObserver);
+        CounterAssignmentServiceOuterClass.ListSectorsResponse listSectorsResponse = repository.listSectors(request);
+        responseObserver.onNext(listSectorsResponse);
+        responseObserver.onCompleted();
     }
 }

@@ -3,10 +3,10 @@ syntax = "proto3";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/empty.proto";
 
-package airport;
+package counter;
 
 service CounterAssignmentService {
-  rpc ListSectors(google.protobuf.Empty) returns(stream ListSectorsResponse);
+  rpc ListSectors(google.protobuf.Empty) returns(ListSectorsResponse);
 }
 
 message ListSectorsResponse {

@@ -1,7 +1,7 @@
 package ar.edu.itba.pod.grpc.client;
 
-import airport.CounterAssignmentServiceGrpc;
-import airport.CounterAssignmentServiceOuterClass;
+import counter.CounterAssignmentServiceGrpc;
+import counter.CounterAssignmentServiceOuterClass;
 import ar.edu.itba.pod.grpc.client.utils.ClientArgs;
 import ar.edu.itba.pod.grpc.client.utils.callback.ListSectorsResponseFutureCallback;
 import com.google.common.util.concurrent.Futures;
