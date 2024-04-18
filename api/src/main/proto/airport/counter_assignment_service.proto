@@ -6,9 +6,11 @@ import "google/protobuf/empty.proto";
 package airport;
 
 service CounterAssignmentService {
-  rpc ListSectors(google.protobuf.Empty) returns(ListSectorsResponse);
+  rpc ListSectors(google.protobuf.Empty) returns(stream ListSectorsResponse);
 }
 
 message ListSectorsResponse {
-  string message = 1;
+  string sectorName = 1;
+  repeated int32 counterRangeStart = 2;
+  repeated int32 counterRangeSize = 3;
 }

@@ -1,22 +1,19 @@
 package ar.edu.itba.pod.grpc.client;
 
-import airport.AdminAirportServiceGrpc;
-import airport.AdminAirportServiceOuterClass;
+import airport.CounterAssignmentServiceGrpc;
+import airport.CounterAssignmentServiceOuterClass;
 import ar.edu.itba.pod.grpc.client.utils.ClientArgs;
-import ar.edu.itba.pod.grpc.client.utils.callback.BoolValueFutureCallback;
-import ar.edu.itba.pod.grpc.client.utils.callback.ManifestResponseFutureCallback;
+import ar.edu.itba.pod.grpc.client.utils.callback.ListSectorsResponseFutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.BoolValue;
+import com.google.protobuf.Empty;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static ar.edu.itba.pod.grpc.client.utils.ClientUtils.*;
 
@@ -37,12 +34,27 @@ public class CounterClient {
                 .usePlaintext()
                 .build();
 
-        AdminAirportServiceGrpc.AdminAirportServiceFutureStub stub = AdminAirportServiceGrpc
+        CounterAssignmentServiceGrpc.CounterAssignmentServiceFutureStub stub = CounterAssignmentServiceGrpc
                 .newFutureStub(channel);
 
         switch (action) {
             case "listSectors" -> {
+                latch = new CountDownLatch(1);
 
+//                for (String[] data : csvData) {
+//                    ListenableFuture<AdminAirportServiceOuterClass.ManifestResponse> listenableFuture;
+//                    AdminAirportServiceOuterClass.ManifestRequest manifestRequest = AdminAirportServiceOuterClass.ManifestRequest.newBuilder().setBooking(data[0])
+//                            .setFlight(data[1]).setAirline(data[2]).build();
+//                    listenableFuture = stub.manifest(manifestRequest);
+//                    Futures.addCallback(listenableFuture,
+//                            new ManifestResponseFutureCallback(logger,latch,data[0],data[1],data[2]), Runnable::run);
+//                }
+                ListenableFuture<CounterAssignmentServiceOuterClass.ListSectorsResponse> listenableFuture = stub.listSectors(Empty.getDefaultInstance());
+                Futures.addCallback(
+                        listenableFuture,
+                        new ListSectorsResponseFutureCallback(logger, latch),
+                        Runnable::run
+                );
             }
         }
 

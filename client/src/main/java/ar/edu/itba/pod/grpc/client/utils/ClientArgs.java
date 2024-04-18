@@ -4,6 +4,7 @@ public enum ClientArgs {
     SERVER_ADDRESS("serverAddress"),
     ACTION("action"),
     SECTOR("sector"),
+    COUNTERS("counters"),
     IN_PATH("inPath"),
     COUNTER_FROM("counterFrom"),
     COUNTER_TO("counterTo"),
