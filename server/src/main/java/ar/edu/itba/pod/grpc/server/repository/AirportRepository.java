@@ -5,8 +5,10 @@ import ar.edu.itba.pod.grpc.server.models.Counter;
 import ar.edu.itba.pod.grpc.server.models.Flight;
 import ar.edu.itba.pod.grpc.server.models.Sector;
 import ar.edu.itba.pod.grpc.server.models.requests.CounterRangeAssignmentRequestModel;
+import ar.edu.itba.pod.grpc.server.models.requests.FreeCounterRangeRequestModel;
 import ar.edu.itba.pod.grpc.server.models.requests.ManifestRequestModel;
 import ar.edu.itba.pod.grpc.server.models.response.CounterRangeAssignmentResponseModel;
+import ar.edu.itba.pod.grpc.server.models.response.FreeCounterRangeResponseModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -96,20 +98,23 @@ public class AirportRepository {
                     bookingRepository.getPendingFlights(requestModel.getSectorName()));
             for (Flight flight : flightQueue) {
                 flight.getPending().set(true);
-                flight.setPendingSector(requestModel.getSectorName());
+                flight.setSectorName(requestModel.getSectorName());
             }
             return responseModel;
         } else {
-            int count = 0;
             for (int available : availableCounters) {
                 counterMap.get(available).getIsCheckingIn().set(true);
                 counterMap.get(available).setAirline(requestModel.getAirlineName());
                 counterMap.get(available).setFlights(flightQueue);
-                count++;
             }
             for (Flight flight : flightQueue) {
+                if (flight.getPending().get())
+                    flight.getPending().set(false);
                 flight.getCheckingIn().set(true);
+                flight.setSectorName(requestModel.getSectorName());
             }
+            counterMap.get(availableCounters.getFirst()).getIsFirstInRange().set(true);
+            counterMap.get(availableCounters.getFirst()).getLastInRange().set(availableCounters.getLast());
             return new CounterRangeAssignmentResponseModel(requestModel.getCountVal(), availableCounters.getLast()
                     , 0,0);
         }
@@ -129,5 +134,33 @@ public class AirportRepository {
             }
         }
         return availableCounters;
+    }
+
+    public FreeCounterRangeResponseModel freeCounterRange(FreeCounterRangeRequestModel requestModel) {
+        if (!sectorMap.containsKey(requestModel.getSectorName()))
+            throw new SectorDoesNotExistsException(requestModel.getSectorName());
+        Sector sector = sectorMap.get(requestModel.getSectorName());
+        if (!sector.getCounterMap().containsKey(requestModel.getFromVal()))
+            throw new CountersAreNotAssignedException();
+        if (!sector.getCounterMap().get(requestModel.getFromVal()).getIsCheckingIn().get())
+            throw new CountersAreNotAssignedException();
+        if (!sector.getCounterMap().get(requestModel.getFromVal()).getAirline().equals(requestModel.getAirline()))
+            throw new CounterIsCheckingInOtherAirlineException();
+        if (!sector.getCounterMap().get(requestModel.getFromVal()).getIsFirstInRange().get())
+            throw new CounterIsNotFirstInRangeException();
+
+        FreeCounterRangeResponseModel responseModel = new FreeCounterRangeResponseModel();
+        for (int i = requestModel.getFromVal(); i <= sector.getCounterMap().get(i).getLastInRange().get() ; i++) {
+            sector.getCounterMap().get(i).getFlights().forEach(flight -> {
+                if (!flight.allBookingsCheckedIn())
+                    throw new StillCheckingInBookingsException();
+                flight.getCheckingIn().set(false);
+                flight.getCheckedIn().set(true);
+                responseModel.getFreedAmount().incrementAndGet();
+                if (!responseModel.getFlights().contains(flight.getCode()))
+                    responseModel.getFlights().add(flight.getCode());
+            });
+        }
+        return responseModel;
     }
 }

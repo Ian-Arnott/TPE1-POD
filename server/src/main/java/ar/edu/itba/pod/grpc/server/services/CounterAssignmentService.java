@@ -3,7 +3,9 @@ package ar.edu.itba.pod.grpc.server.services;
 import airport.CounterAssignmentServiceGrpc;
 import airport.CounterAssignmentServiceOuterClass.*;
 import ar.edu.itba.pod.grpc.server.models.requests.CounterRangeAssignmentRequestModel;
+import ar.edu.itba.pod.grpc.server.models.requests.FreeCounterRangeRequestModel;
 import ar.edu.itba.pod.grpc.server.models.response.CounterRangeAssignmentResponseModel;
+import ar.edu.itba.pod.grpc.server.models.response.FreeCounterRangeResponseModel;
 import ar.edu.itba.pod.grpc.server.repository.AirportRepository;
 import com.google.protobuf.Empty;
 import io.grpc.stub.StreamObserver;
@@ -29,6 +31,17 @@ public class CounterAssignmentService extends CounterAssignmentServiceGrpc.Count
                 .setAmountPending(responseModel.getAmountPending())
                 .setLastCheckingIn(responseModel.getLastCheckingIn())
                 .setAmountPendingAhead(responseModel.getAmountPendingAhead()).build());
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void freeCounterRange(FreeCounterRangeRequest request, StreamObserver<FreeCounterRangeResponse> responseObserver) {
+        FreeCounterRangeRequestModel requestModel = FreeCounterRangeRequestModel.fromFreeCounterRequest(request);
+
+        FreeCounterRangeResponseModel responseModel = repository.freeCounterRange(requestModel);
+        responseObserver.onNext(FreeCounterRangeResponse.newBuilder()
+                .addAllFlights(responseModel.getFlights())
+                .setFreedAmount(responseModel.getFreedAmount().get()).build());
         responseObserver.onCompleted();
     }
 }

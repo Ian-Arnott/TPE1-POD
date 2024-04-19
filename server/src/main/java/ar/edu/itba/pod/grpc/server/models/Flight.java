@@ -15,7 +15,7 @@ public class Flight {
     private AtomicBoolean checkedIn;
     private AtomicBoolean checkingIn;
     private AtomicBoolean pending;
-    private String pendingSector;
+    private String sectorName;
     public Flight(String code, Airline airline) {
         this.code = code;
         this.airline = airline;
@@ -23,7 +23,7 @@ public class Flight {
         this.checkedIn = new AtomicBoolean(false);
         this.checkingIn = new AtomicBoolean(false);
         this.pending = new AtomicBoolean(false);
-        pendingSector = null;
+        sectorName = null;
     }
 
     public String getCode() {
@@ -62,11 +62,20 @@ public class Flight {
         return bookings;
     }
 
-    public void setPendingSector(String sectorName) {
-        this.pendingSector = sectorName;
+    public void setSectorName(String sectorName) {
+        this.sectorName = sectorName;
     }
 
-    public String getPendingSector() {
-        return pendingSector;
+    public String getSectorName() {
+        return sectorName;
+    }
+
+    public synchronized boolean allBookingsCheckedIn() {
+        for (Booking booking : bookings.values()) {
+            if (!booking.getCheckedIn().get()) {
+                return false;
+            }
+        }
+        return true;
     }
 }

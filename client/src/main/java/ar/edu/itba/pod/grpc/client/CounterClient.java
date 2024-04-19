@@ -4,6 +4,7 @@ import airport.CounterAssignmentServiceGrpc;
 import airport.CounterAssignmentServiceOuterClass.*;
 import ar.edu.itba.pod.grpc.client.utils.ClientArgs;
 import ar.edu.itba.pod.grpc.client.utils.callback.CounterRangeAssigmentResponseFutureCallback;
+import ar.edu.itba.pod.grpc.client.utils.callback.FreeCounterRangeResponseFutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.ManagedChannel;
@@ -62,6 +63,25 @@ public class CounterClient {
                         .setAirlineName(airline).build();
                 ListenableFuture<CounterRangeAssigmentResponse> listenableFuture = stub.counterRangeAssigment(request);
                 Futures.addCallback(listenableFuture, new CounterRangeAssigmentResponseFutureCallback(logger,latch, sectorName, airline, flights), Runnable::run);
+            }
+            case "freeCounters" -> {
+                String fromVal = argMap.get(ClientArgs.COUNTER_FROM.getValue());
+                String sectorName = argMap.get(ClientArgs.SECTOR.getValue());
+                String airline = argMap.get(ClientArgs.AIRLINE.getValue());
+
+                checkNullArgs(fromVal, "From Value Not Specified");
+                checkNullArgs(sectorName, "Sector Name Not Specified");
+                checkNullArgs(airline, "Airline Not Specified");
+                latch = new CountDownLatch(1);
+
+
+                int value = Integer.parseInt(fromVal);
+                FreeCounterRangeRequest request = FreeCounterRangeRequest.newBuilder()
+                        .setSectorName(sectorName)
+                        .setFromVal(value)
+                        .setAirline(airline).build();
+                ListenableFuture<FreeCounterRangeResponse> listenableFuture = stub.freeCounterRange(request);
+                Futures.addCallback(listenableFuture, new FreeCounterRangeResponseFutureCallback(logger,latch,sectorName,airline,value),Runnable::run);
             }
         }
 

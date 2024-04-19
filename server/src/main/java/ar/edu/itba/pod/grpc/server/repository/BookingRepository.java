@@ -93,7 +93,7 @@ public class BookingRepository {
     public int getPendingFlights(String sectorName) {
         int counter = 0;
         for (Map.Entry<String, Flight> entry : flightConcurrentMap.entrySet()) {
-            if (entry.getValue().getPending().get() && entry.getValue().getPendingSector().equals(sectorName)) counter++;
+            if (entry.getValue().getPending().get() && entry.getValue().getSectorName().equals(sectorName)) counter++;
         }
         return counter;
     }
