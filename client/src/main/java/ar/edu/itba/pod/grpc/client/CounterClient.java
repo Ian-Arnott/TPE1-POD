@@ -81,7 +81,7 @@ public class CounterClient {
                         .setFromVal(value)
                         .setAirline(airline).build();
                 ListenableFuture<FreeCounterRangeResponse> listenableFuture = stub.freeCounterRange(request);
-                Futures.addCallback(listenableFuture, new FreeCounterRangeResponseFutureCallback(logger,latch,sectorName,airline,value),Runnable::run);
+                Futures.addCallback(listenableFuture, new FreeCounterRangeResponseFutureCallback(logger,latch,sectorName, value),Runnable::run);
             }
         }
 

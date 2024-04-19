@@ -9,13 +9,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class FreeCounterRangeResponseFutureCallback extends AbstractFutureCallback<CounterAssignmentServiceOuterClass.FreeCounterRangeResponse> {
 
     private final String sectorName;
-    private final String airline;
     private final int fromVal;
 
-    public FreeCounterRangeResponseFutureCallback(Logger logger, CountDownLatch latch, String sectorName, String airline, int fromVal) {
+    public FreeCounterRangeResponseFutureCallback(Logger logger, CountDownLatch latch, String sectorName, int fromVal) {
         super(logger,latch);
         this.sectorName = sectorName;
-        this.airline = airline;
         this.fromVal = fromVal;
     }
 
@@ -31,7 +29,7 @@ public class FreeCounterRangeResponseFutureCallback extends AbstractFutureCallba
                 flights.append("|");
         });
         response = String.format("Ended check-in for flights %s on %d counters (%d-%d) in Sector %s",
-                flights.toString(),
+                flights,
                 result.getFreedAmount(),
                 fromVal,
                 fromVal - 1 + result.getFreedAmount(),
