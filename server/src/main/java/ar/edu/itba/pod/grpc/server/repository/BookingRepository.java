@@ -50,6 +50,7 @@ public class BookingRepository {
         }
         Booking newBooking = new Booking(booking, existingAirline, existingFlight);
         existingAirline.getBookings().put(booking, newBooking);
+
         existingFlight.getBookings().put(booking, newBooking);
 
         flightConcurrentMap.putIfAbsent(flight, existingFlight);

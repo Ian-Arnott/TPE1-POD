@@ -150,16 +150,15 @@ public class AirportRepository {
             throw new CounterIsNotFirstInRangeException();
 
         FreeCounterRangeResponseModel responseModel = new FreeCounterRangeResponseModel();
-        for (int i = requestModel.getFromVal(); i <= sector.getCounterMap().get(i).getLastInRange().get() ; i++) {
+        for (int i = requestModel.getFromVal(); i <= sector.getCounterMap().get(requestModel.getFromVal()).getLastInRange().get(); i++) {
             sector.getCounterMap().get(i).getFlights().forEach(flight -> {
-                if (!flight.allBookingsCheckedIn())
+                if (!flight.bookingQueueEmpty())
                     throw new StillCheckingInBookingsException();
                 flight.getCheckingIn().set(false);
                 flight.getCheckedIn().set(true);
-                responseModel.getFreedAmount().incrementAndGet();
-                if (!responseModel.getFlights().contains(flight.getCode()))
-                    responseModel.getFlights().add(flight.getCode());
+                responseModel.getFlights().add(flight.getCode());
             });
+            responseModel.getFreedAmount().incrementAndGet();
         }
         return responseModel;
     }
