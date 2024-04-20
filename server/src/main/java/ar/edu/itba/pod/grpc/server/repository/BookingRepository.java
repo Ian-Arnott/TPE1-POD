@@ -6,7 +6,6 @@ import ar.edu.itba.pod.grpc.server.models.Airline;
 import ar.edu.itba.pod.grpc.server.models.Booking;
 import ar.edu.itba.pod.grpc.server.models.Flight;
 
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -58,11 +57,6 @@ public class BookingRepository {
         bookingConcurrentMap.put(booking, newBooking);
     }
 
-    public boolean containsFlight(String flight) {
-        return flightConcurrentMap.containsKey(flight);
-    }
-
-
     public boolean flightDoesNotHasBookings(String flight) {
         return flightConcurrentMap.get(flight).getBookings().isEmpty();
     }
@@ -91,11 +85,4 @@ public class BookingRepository {
         return flightConcurrentMap;
     }
 
-    public int getPendingFlights(String sectorName) {
-        int counter = 0;
-        for (Map.Entry<String, Flight> entry : flightConcurrentMap.entrySet()) {
-            if (entry.getValue().getPending().get() && entry.getValue().getSectorName().equals(sectorName)) counter++;
-        }
-        return counter;
-    }
 }

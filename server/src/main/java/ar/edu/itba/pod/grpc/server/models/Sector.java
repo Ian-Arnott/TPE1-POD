@@ -1,19 +1,28 @@
 package ar.edu.itba.pod.grpc.server.models;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Sector {
     private final String name;
-    // una lista counters, los counters son representados con numeros enteros
     private final Map<Integer, Counter> counterMap;
+    private final Map<String, ConcurrentLinkedQueue<Flight>> pendingFlightMap;
 
     public Sector(String name) {
         this.name = name;
-        this.counterMap = new ConcurrentHashMap<>();
+        this.counterMap = new ConcurrentSkipListMap<>();
+        this.pendingFlightMap = new ConcurrentSkipListMap<>();
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public Map<String, ConcurrentLinkedQueue<Flight>> getPendingFlightMap() {
+        return pendingFlightMap;
+    }
 
     public synchronized AtomicInteger addCounters(AtomicInteger lastCounterAdded, int counterAmount) {
         for (int i = 0; i < counterAmount; i++) {
@@ -26,12 +35,21 @@ public class Sector {
         return counterMap;
     }
 
-    // al mostrar los sectores en el servant de servicio de reservas,
-    // hay que devolver un string con los counters
-    // me fijo que la diferencia entre un counter y el siguiente sea < 1 y si lo es
-    // ultimo counter = ese counter
-    // si es < 1 entonces termino esa parte del string,
-    // y hago que primer counter = ese counter
-    // asi asta terminar de hacer los counters.
-    // para el 2.2 asumir que se muestra una linea nueva de counters si para de ser contiguo
+    public void resolvePending(int counterAmount, int firstCounter) {
+        for (Map.Entry<String, ConcurrentLinkedQueue<Flight>> entry : pendingFlightMap.entrySet()) {
+            ConcurrentLinkedQueue<Flight> queue = entry.getValue();
+            if (!queue.isEmpty()) {
+                for (int i = 0; i < counterAmount; i++) {
+                    Counter counter = counterMap.get(firstCounter + i);
+                    if (i == 0)
+                        counter.getIsFirstInRange().set(true);
+                    counter.getIsFirstInRange().set(false);
+                    counter.getLastInRange().set(firstCounter - 1 + counterAmount);
+                    counter.getFlights().addAll(queue);
+                }
+                queue.clear();
+                break;
+            }
+        }
+    }
 }

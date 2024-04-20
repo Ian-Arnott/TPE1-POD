@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class AirportRepository {
     private static AirportRepository instance;
     private static final BookingRepository bookingRepository = BookingRepository.getInstance();
+
     private final ConcurrentMap<String, Sector> sectorMap;
     private AtomicInteger lastCounterAdded;
 
@@ -45,6 +46,10 @@ public class AirportRepository {
         return sector == null;
     }
 
+    public synchronized ConcurrentMap<String, Sector> getSectorMap() {
+        return sectorMap;
+    }
+
 
     public int addCountersToSector(String sectorName, int counterAmount) {
         if (sectorMap.get(sectorName) == null) {
@@ -56,6 +61,7 @@ public class AirportRepository {
         Sector sector = sectorMap.get(sectorName);
 
         lastCounterAdded = sector.addCounters(lastCounterAdded, counterAmount);
+        sector.resolvePending(counterAmount, lastCounterAdded.get() + 1 - counterAmount);
         return lastCounterAdded.get();
     }
 
@@ -95,10 +101,11 @@ public class AirportRepository {
         if (availableCounters.isEmpty()) {
             CounterRangeAssignmentResponseModel responseModel = new CounterRangeAssignmentResponseModel(
                     0,0,requestModel.getCountVal(),
-                    bookingRepository.getPendingFlights(requestModel.getSectorName()));
+                    sectorMap.get(requestModel.getSectorName()).getPendingFlightMap().get(requestModel.getAirlineName()).size());
             for (Flight flight : flightQueue) {
                 flight.getPending().set(true);
                 flight.setSectorName(requestModel.getSectorName());
+                sectorMap.get(requestModel.getSectorName()).getPendingFlightMap().get(requestModel.getAirlineName()).add(flight);
             }
             return responseModel;
         } else {
@@ -160,6 +167,7 @@ public class AirportRepository {
             });
             responseModel.getFreedAmount().incrementAndGet();
         }
+        sector.resolvePending(responseModel.getFreedAmount().get(), requestModel.getFromVal());
         return responseModel;
     }
 }
