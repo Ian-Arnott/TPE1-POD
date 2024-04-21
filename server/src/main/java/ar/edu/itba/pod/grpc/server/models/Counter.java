@@ -7,9 +7,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Counter {
     private String airline;
     private ConcurrentLinkedQueue<Flight> flights;
-    private AtomicBoolean isCheckingIn;
-    private AtomicBoolean isFirstInRange;
-    private AtomicInteger lastInRange;
+    private final ConcurrentLinkedQueue<Booking> bookingQueue;
+    private final AtomicBoolean isCheckingIn;
+    private final AtomicBoolean isFirstInRange;
+    private final AtomicInteger lastInRange;
 
     public Counter() {
         flights = null;
@@ -17,6 +18,7 @@ public class Counter {
         isCheckingIn = new AtomicBoolean(false);
         isFirstInRange = new AtomicBoolean(false);
         lastInRange = new AtomicInteger(0);
+        this.bookingQueue = new ConcurrentLinkedQueue<>();
     }
 
     public AtomicBoolean getIsFirstInRange() {
@@ -45,5 +47,13 @@ public class Counter {
 
     public String getAirline() {
         return airline;
+    }
+
+    public ConcurrentLinkedQueue<Booking> getBookingQueue() {
+        return bookingQueue;
+    }
+
+    public synchronized boolean bookingQueueEmpty() {
+        return bookingQueue.isEmpty();
     }
 }

@@ -7,7 +7,7 @@ public class Booking {
     private final String code;
     private final Airline airline;
     private final Flight flight;
-    private AtomicBoolean checkedIn;
+    private final AtomicBoolean checkedIn;
 
     public Booking(String code, Airline airline, Flight flight) {
         this.code = code;
@@ -25,4 +25,15 @@ public class Booking {
     }
 
 
+    public String getCode() {
+        return code;
+    }
+
+    public Flight getFlight() {
+        return flight;
+    }
+
+    public Airline getAirline() {
+        return airline;
+    }
 }

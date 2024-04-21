@@ -4,6 +4,7 @@ import airport.CounterAssignmentServiceGrpc;
 import airport.CounterAssignmentServiceOuterClass.*;
 import ar.edu.itba.pod.grpc.server.models.requests.CounterRangeAssignmentRequestModel;
 import ar.edu.itba.pod.grpc.server.models.requests.FreeCounterRangeRequestModel;
+import ar.edu.itba.pod.grpc.server.models.requests.PerformCounterCheckInRequestModel;
 import ar.edu.itba.pod.grpc.server.models.response.CounterRangeAssignmentResponseModel;
 import ar.edu.itba.pod.grpc.server.models.response.FreeCounterRangeResponseModel;
 import ar.edu.itba.pod.grpc.server.repository.AirportRepository;
@@ -43,5 +44,11 @@ public class CounterAssignmentService extends CounterAssignmentServiceGrpc.Count
                 .addAllFlights(responseModel.getFlights())
                 .setFreedAmount(responseModel.getFreedAmount().get()).build());
         responseObserver.onCompleted();
+    }
+
+    @Override
+    public void performCounterCheckIn(PerformCounterCheckInRequest request, StreamObserver<PerformCounterCheckInResponse> responseObserver) {
+        PerformCounterCheckInRequestModel requestModel = PerformCounterCheckInRequestModel.fromPerformCounterCheckInRequest(request);
+        repository.performCounterCheckIn(requestModel, responseObserver);
     }
 }

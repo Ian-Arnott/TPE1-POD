@@ -9,6 +9,7 @@ service CounterAssignmentService {
   rpc ListSectors(google.protobuf.Empty) returns(ListSectorsResponse);
   rpc CounterRangeAssigment(CounterRangeAssigmentRequest) returns(CounterRangeAssigmentResponse);
   rpc FreeCounterRange(FreeCounterRangeRequest) returns(FreeCounterRangeResponse);
+  rpc PerformCounterCheckIn(PerformCounterCheckInRequest) returns(stream PerformCounterCheckInResponse);
 }
 
 message ListSectorsResponse {
@@ -38,4 +39,17 @@ message FreeCounterRangeRequest {
 message FreeCounterRangeResponse {
   int32 freedAmount = 1;
   repeated string flights = 2;
+}
+
+message PerformCounterCheckInRequest {
+  int32 fromVal = 1;
+  string sectorName = 2;
+  string airlineName = 3;
+}
+
+message PerformCounterCheckInResponse {
+  int32 counter = 1;
+  bool successful = 2;
+  string flight = 3;
+  string booking = 4;
 }

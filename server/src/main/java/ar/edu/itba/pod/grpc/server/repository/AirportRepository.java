@@ -1,14 +1,18 @@
 package ar.edu.itba.pod.grpc.server.repository;
 
+import airport.CounterAssignmentServiceOuterClass;
 import ar.edu.itba.pod.grpc.server.exeptions.*;
+import ar.edu.itba.pod.grpc.server.models.Booking;
 import ar.edu.itba.pod.grpc.server.models.Counter;
 import ar.edu.itba.pod.grpc.server.models.Flight;
 import ar.edu.itba.pod.grpc.server.models.Sector;
 import ar.edu.itba.pod.grpc.server.models.requests.CounterRangeAssignmentRequestModel;
 import ar.edu.itba.pod.grpc.server.models.requests.FreeCounterRangeRequestModel;
 import ar.edu.itba.pod.grpc.server.models.requests.ManifestRequestModel;
+import ar.edu.itba.pod.grpc.server.models.requests.PerformCounterCheckInRequestModel;
 import ar.edu.itba.pod.grpc.server.models.response.CounterRangeAssignmentResponseModel;
 import ar.edu.itba.pod.grpc.server.models.response.FreeCounterRangeResponseModel;
+import io.grpc.stub.StreamObserver;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,10 +48,6 @@ public class AirportRepository {
         }
         Sector sector = sectorMap.put(sectorName, new Sector(sectorName));
         return sector == null;
-    }
-
-    public synchronized ConcurrentMap<String, Sector> getSectorMap() {
-        return sectorMap;
     }
 
 
@@ -158,9 +158,10 @@ public class AirportRepository {
 
         FreeCounterRangeResponseModel responseModel = new FreeCounterRangeResponseModel();
         for (int i = requestModel.getFromVal(); i <= sector.getCounterMap().get(requestModel.getFromVal()).getLastInRange().get(); i++) {
-            sector.getCounterMap().get(i).getFlights().forEach(flight -> {
-                if (!flight.bookingQueueEmpty())
-                    throw new StillCheckingInBookingsException();
+            Counter counter = sector.getCounterMap().get(i);
+            if (!counter.bookingQueueEmpty())
+                throw new StillCheckingInBookingsException();
+            counter.getFlights().forEach(flight -> {
                 flight.getCheckingIn().set(false);
                 flight.getCheckedIn().set(true);
                 responseModel.getFlights().add(flight.getCode());
@@ -169,5 +170,39 @@ public class AirportRepository {
         }
         sector.resolvePending(responseModel.getFreedAmount().get(), requestModel.getFromVal());
         return responseModel;
+    }
+
+    public synchronized void performCounterCheckIn(PerformCounterCheckInRequestModel requestModel, StreamObserver<CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse> responseObserver) {
+        if (!sectorMap.containsKey(requestModel.getSectorName()))
+            throw new SectorDoesNotExistsException(requestModel.getSectorName());
+        Map<Integer,Counter> counterMap = sectorMap.get(requestModel.getSectorName()).getCounterMap();
+        if (!counterMap.containsKey(requestModel.getFromVal().get()))
+            throw new CountersAreNotAssignedException();
+        Counter counter = counterMap.get(requestModel.getFromVal().get());
+        if (!counter.getIsCheckingIn().get())
+            throw new CountersAreNotAssignedException();
+        if (!counter.getAirline().equals(requestModel.getAirlineName()))
+            throw new CounterIsCheckingInOtherAirlineException();
+        if (!counter.getIsFirstInRange().get())
+            throw new CounterIsNotFirstInRangeException();
+        for (int i = requestModel.getFromVal().get(); i <= counter.getLastInRange().get(); i++) {
+            Counter auxCounter = counterMap.get(i);
+            Booking booking = null;
+            if (!auxCounter.bookingQueueEmpty()) {
+                booking = auxCounter.getBookingQueue().poll();
+                responseObserver.onNext(CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse.newBuilder()
+                        .setCounter(i)
+                        .setBooking(booking.getCode()).setFlight(booking.getFlight().getCode())
+                        .setSuccessful(true)
+                        .build());
+            } else {
+                responseObserver.onNext(CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse.newBuilder()
+                        .setSuccessful(false).setCounter(i).build());
+            }
+            if (i == counter.getLastInRange().get()) {
+                responseObserver.onCompleted();
+            }
+        }
+
     }
 }

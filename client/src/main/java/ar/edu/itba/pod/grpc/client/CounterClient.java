@@ -5,10 +5,12 @@ import airport.CounterAssignmentServiceOuterClass.*;
 import ar.edu.itba.pod.grpc.client.utils.ClientArgs;
 import ar.edu.itba.pod.grpc.client.utils.callback.CounterRangeAssigmentResponseFutureCallback;
 import ar.edu.itba.pod.grpc.client.utils.callback.FreeCounterRangeResponseFutureCallback;
+import ar.edu.itba.pod.grpc.client.utils.observers.PerformCheckInStreamObserver;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +25,7 @@ public class CounterClient {
     private static final Logger logger = LoggerFactory.getLogger(AdminClient.class);
     private static CountDownLatch latch;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException{
         logger.info("Counter Client Starting ...");
         Map<String,String> argMap = parseArgs(args);
         final String serverAddress = argMap.get(ClientArgs.SERVER_ADDRESS.getValue());
@@ -82,6 +84,27 @@ public class CounterClient {
                         .setAirline(airline).build();
                 ListenableFuture<FreeCounterRangeResponse> listenableFuture = stub.freeCounterRange(request);
                 Futures.addCallback(listenableFuture, new FreeCounterRangeResponseFutureCallback(logger,latch,sectorName, value),Runnable::run);
+            }
+            case "checkinCounters" -> {
+                String fromVal = argMap.get(ClientArgs.COUNTER_FROM.getValue());
+                String sectorName = argMap.get(ClientArgs.SECTOR.getValue());
+                String airline = argMap.get(ClientArgs.AIRLINE.getValue());
+
+                checkNullArgs(fromVal, "From Value Not Specified");
+                checkNullArgs(sectorName, "Sector Name Not Specified");
+                checkNullArgs(airline, "Airline Not Specified");
+
+                latch = new CountDownLatch(1);
+                int value = Integer.parseInt(fromVal);
+                PerformCounterCheckInRequest request = PerformCounterCheckInRequest.newBuilder()
+                        .setSectorName(sectorName)
+                        .setAirlineName(airline)
+                        .setFromVal(value)
+                        .build();
+                CounterAssignmentServiceGrpc.CounterAssignmentServiceStub serviceStub = CounterAssignmentServiceGrpc.newStub(channel);
+                StreamObserver<PerformCounterCheckInResponse> observer = new PerformCheckInStreamObserver(latch);
+                serviceStub.performCounterCheckIn(request,observer);
+                latch.await();
             }
         }
 

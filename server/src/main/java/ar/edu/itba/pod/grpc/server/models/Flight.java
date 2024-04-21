@@ -10,18 +10,19 @@ public class Flight {
     private final String code;
     private final Airline airline;
     private final ConcurrentHashMap<String, Booking> bookings;
-    private final ConcurrentLinkedQueue<Booking> bookingQueue;
+
     // podria ser un status que tiene como posibles valores de un enum,
     // pero no es atomico el cambio de staus usando el enum.
     private AtomicBoolean checkedIn;
     private AtomicBoolean checkingIn;
     private AtomicBoolean pending;
     private String sectorName;
+
+
     public Flight(String code, Airline airline) {
         this.code = code;
         this.airline = airline;
         this.bookings = new ConcurrentHashMap<>();
-        this.bookingQueue = new ConcurrentLinkedQueue<>();
         this.checkedIn = new AtomicBoolean(false);
         this.checkingIn = new AtomicBoolean(false);
         this.pending = new AtomicBoolean(false);
@@ -72,7 +73,5 @@ public class Flight {
         return sectorName;
     }
 
-    public synchronized boolean bookingQueueEmpty() {
-        return bookingQueue.isEmpty();
-    }
+
 }
