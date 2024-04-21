@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
+
+package airport;
+
+service CheckInService {
+  rpc FetchCounter(Booking) returns(FetchCounterResponse);
+  rpc PassengerCheckIn(PassengerCheckInRequest) returns(PassengerCheckInResponse);
+  rpc PassengerStatus(Booking) returns(PassengerStatusResponse);
+}
+
+message Booking {
+  string booking = 1;
+}
+
+message FetchCounterResponse {
+  string flight = 1;
+  string airline = 2;
+  int32 firstCounter = 3;
+  int32 lastCounter = 4;
+  string sectorName = 5;
+  int32 peopleInLine = 6;
+}
+
+message PassengerCheckInRequest {
+  string booking = 1;
+  string sectorName = 2;
+  int32 firstCounter = 3;
+}
+
+message PassengerCheckInResponse {
+  string flight = 1;
+  string airline = 2;
+  int32 lastCounter = 3;
+  int32 peopleInLIne = 4;
+}
+
+message PassengerStatusResponse {
+  string flight = 1;
+  string airline = 2;
+  int32 counter = 3;
+  string sectorName = 4;
+}

@@ -25,7 +25,7 @@ public class FreeCounterRangeResponseFutureCallback extends AbstractFutureCallba
         result.getFlightsList().forEach(flight -> {
             flights.append(flight);
             counter.getAndIncrement();
-            if (counter.get() < flights.length() )
+            if (counter.get() < flights.length())
                 flights.append("|");
         });
         response = String.format("Ended check-in for flights %s on %d counters (%d-%d) in Sector %s",

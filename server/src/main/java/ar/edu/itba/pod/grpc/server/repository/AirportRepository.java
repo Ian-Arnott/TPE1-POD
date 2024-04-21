@@ -6,17 +6,16 @@ import ar.edu.itba.pod.grpc.server.models.Booking;
 import ar.edu.itba.pod.grpc.server.models.Counter;
 import ar.edu.itba.pod.grpc.server.models.Flight;
 import ar.edu.itba.pod.grpc.server.models.Sector;
-import ar.edu.itba.pod.grpc.server.models.requests.CounterRangeAssignmentRequestModel;
-import ar.edu.itba.pod.grpc.server.models.requests.FreeCounterRangeRequestModel;
-import ar.edu.itba.pod.grpc.server.models.requests.ManifestRequestModel;
-import ar.edu.itba.pod.grpc.server.models.requests.PerformCounterCheckInRequestModel;
+import ar.edu.itba.pod.grpc.server.models.requests.*;
 import ar.edu.itba.pod.grpc.server.models.response.CounterRangeAssignmentResponseModel;
 import ar.edu.itba.pod.grpc.server.models.response.FreeCounterRangeResponseModel;
+import ar.edu.itba.pod.grpc.server.models.response.PassengerCheckInResponseModel;
 import io.grpc.stub.StreamObserver;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
@@ -157,7 +156,8 @@ public class AirportRepository {
             throw new CounterIsNotFirstInRangeException();
 
         FreeCounterRangeResponseModel responseModel = new FreeCounterRangeResponseModel();
-        for (int i = requestModel.getFromVal(); i <= sector.getCounterMap().get(requestModel.getFromVal()).getLastInRange().get(); i++) {
+        int lastInRange = sector.getCounterMap().get(requestModel.getFromVal()).getLastInRange().get();
+        for (int i = requestModel.getFromVal(); i <= lastInRange; i++) {
             Counter counter = sector.getCounterMap().get(i);
             if (!counter.bookingQueueEmpty())
                 throw new StillCheckingInBookingsException();
@@ -166,6 +166,9 @@ public class AirportRepository {
                 flight.getCheckedIn().set(true);
                 responseModel.getFlights().add(flight.getCode());
             });
+            counter.getIsCheckingIn().set(false);
+            counter.getIsFirstInRange().set(false);
+            counter.getLastInRange().set(0);
             responseModel.getFreedAmount().incrementAndGet();
         }
         sector.resolvePending(responseModel.getFreedAmount().get(), requestModel.getFromVal());
@@ -187,9 +190,10 @@ public class AirportRepository {
             throw new CounterIsNotFirstInRangeException();
         for (int i = requestModel.getFromVal().get(); i <= counter.getLastInRange().get(); i++) {
             Counter auxCounter = counterMap.get(i);
-            Booking booking = null;
+            Booking booking;
             if (!auxCounter.bookingQueueEmpty()) {
                 booking = auxCounter.getBookingQueue().poll();
+                booking.getCheckedIn().set(true);
                 responseObserver.onNext(CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse.newBuilder()
                         .setCounter(i)
                         .setBooking(booking.getCode()).setFlight(booking.getFlight().getCode())
@@ -205,4 +209,32 @@ public class AirportRepository {
         }
 
     }
+
+    public synchronized PassengerCheckInResponseModel passengerCheckIn(PassengerCheckInRequestModel requestModel) {
+        if (!bookingRepository.bookingExist(requestModel.getBooking()))
+            throw new BookingDoesNotExistException(requestModel.getBooking());
+        Booking booking = bookingRepository.getBooking(requestModel.getBooking());
+        if (booking.getCheckedIn().get())
+            throw new BookingAlreadyCheckedInException(booking.getCode());
+        if (!sectorMap.containsKey(requestModel.getSectorName()))
+            throw new SectorDoesNotExistsException(requestModel.getSectorName());
+        Map<Integer, Counter> counterMap = sectorMap.get(requestModel.getSectorName()).getCounterMap();
+        if (!counterMap.containsKey(requestModel.getFirstCounter().get()))
+            throw new CountersAreNotAssignedException();
+        if (!counterMap.get(requestModel.getFirstCounter().get()).getIsFirstInRange().get())
+            throw new CounterIsNotFirstInRangeException();
+        int lastCounter = counterMap.get(requestModel.getFirstCounter().get()).getLastInRange().get();
+        Random random = new Random();
+        int counter = random.nextInt(lastCounter - requestModel.getFirstCounter().get() + 1) + requestModel.getFirstCounter().get();
+        AtomicInteger peopleInLine =  new AtomicInteger();
+        for (int i = requestModel.getFirstCounter().get(); i <= lastCounter; i++) {
+            ConcurrentLinkedQueue<Booking> bookingQueue = counterMap.get(i).getBookingQueue();
+            if (bookingQueue.contains(booking))
+                throw new BookingAlreadyInLineException(booking.getCode());
+            peopleInLine.addAndGet(bookingQueue.size());
+        }
+        counterMap.get(counter).getBookingQueue().add(booking);
+        return new PassengerCheckInResponseModel(new AtomicInteger(lastCounter),peopleInLine,booking.getFlight().getCode(),booking.getAirline().getCode());
+    }
+
 }

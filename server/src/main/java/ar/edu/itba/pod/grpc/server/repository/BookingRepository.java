@@ -85,4 +85,11 @@ public class BookingRepository {
         return flightConcurrentMap;
     }
 
+    public boolean bookingExist(String booking) {
+        return bookingConcurrentMap.containsKey(booking);
+    }
+
+    public Booking getBooking(String booking) {
+        return bookingConcurrentMap.get(booking);
+    }
 }

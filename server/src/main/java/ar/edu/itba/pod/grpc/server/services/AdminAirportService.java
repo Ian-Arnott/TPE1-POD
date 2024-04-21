@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AdminAirportService extends AdminAirportServiceGrpc.AdminAirportServiceImplBase {
-    private final static Logger logger = LoggerFactory.getLogger(AdminAirportService.class);
+    private static final Logger logger = LoggerFactory.getLogger(AdminAirportService.class);
     private static final AirportRepository repository = AirportRepository.getInstance();
 
     @Override
