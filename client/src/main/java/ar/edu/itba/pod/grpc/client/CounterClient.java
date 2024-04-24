@@ -49,7 +49,8 @@ public class CounterClient {
 //                    Futures.addCallback(listenableFuture,
 //                            new ManifestResponseFutureCallback(logger,latch,data[0],data[1],data[2]), Runnable::run);
 //                }
-                ListenableFuture<CounterAssignmentServiceOuterClass.ListSectorsResponse> listenableFuture = stub.listSectors(Empty.getDefaultInstance());
+                ListenableFuture<CounterAssignmentServiceOuterClass.ListSectorsResponse> listenableFuture =
+                        stub.listSectors(Empty.getDefaultInstance());
                 Futures.addCallback(
                         listenableFuture,
                         new ListSectorsResponseFutureCallback(logger, latch),

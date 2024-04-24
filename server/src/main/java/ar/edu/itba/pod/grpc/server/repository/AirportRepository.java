@@ -1,6 +1,7 @@
 package ar.edu.itba.pod.grpc.server.repository;
 
 import airport.AdminAirportServiceOuterClass;
+import ar.edu.itba.pod.grpc.server.exeptions.SectorMapIsEmptyException;
 import counter.CounterAssignmentServiceOuterClass;
 import ar.edu.itba.pod.grpc.server.exeptions.NonPositiveCounterException;
 import ar.edu.itba.pod.grpc.server.exeptions.SectorAlreadyExistsException;
@@ -9,10 +10,7 @@ import ar.edu.itba.pod.grpc.server.models.Sector;
 import ar.edu.itba.pod.grpc.server.models.requests.ManifestRequestModel;
 import com.google.protobuf.Empty;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -61,15 +59,13 @@ public class AirportRepository {
         return bookingRepository.manifest(requestModel.getBooking(),requestModel.getFlight(),requestModel.getAirline());
     }
 
-    public CounterAssignmentServiceOuterClass.ListSectorsResponse listSectors(Empty request) {
-        if (sectorMap.isEmpty()) {
-            // TODO: Implement
-        }
+    public Map<String, Set<Integer>> listSectors() {
+        if (sectorMap.isEmpty()) throw new SectorMapIsEmptyException();
 
-        Map<String, List<int[]>> response = new HashMap<>();
+        Map<String, Set<Integer>> res = new HashMap<>();
 
-        sectorMap.forEach((sectorName, sector) -> response.put(sectorName, sector.getCounterList()));
+        sectorMap.forEach((sectorName, sector) -> res.put(sectorName, sector.getCounterMap().keySet()));
 
-        return CounterAssignmentServiceOuterClass.ListSectorsResponse.newBuilder().setSectorName("A").setCounterRangeStart(1, 1).setCounterRangeSize(1, 3).build();
+        return res;
     }
 }
