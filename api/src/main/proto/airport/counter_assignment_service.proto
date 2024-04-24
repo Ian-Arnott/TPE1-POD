@@ -7,6 +7,7 @@ package airport;
 
 service CounterAssignmentService {
   rpc ListSectors(google.protobuf.Empty) returns(ListSectorsResponse);
+  rpc ListCounters(ListCountersRequest) returns(ListCountersResponse);
   rpc CounterRangeAssignment(CounterRangeAssignmentRequest) returns(CounterRangeAssignmentResponse);
   rpc FreeCounterRange(FreeCounterRangeRequest) returns(FreeCounterRangeResponse);
   rpc PerformCounterCheckIn(PerformCounterCheckInRequest) returns(stream PerformCounterCheckInResponse);
@@ -14,6 +15,23 @@ service CounterAssignmentService {
 
 message ListSectorsResponse {
   string message = 1;
+}
+
+message ListCountersRequest {
+  string sectorName = 1;
+  int32 fromVal = 2;
+  int32 toVal = 3;
+}
+
+message ListCountersResponse {
+  repeated ListCounterItem items = 1;
+}
+
+message ListCounterItem {
+  int32 counterNum = 1;
+  string airlineName = 2;
+  repeated string flightCodes = 3;
+  int32 people = 4;
 }
 
 message CounterRangeAssignmentRequest {

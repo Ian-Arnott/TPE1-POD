@@ -5,6 +5,7 @@ import airport.CounterAssignmentServiceOuterClass.*;
 import ar.edu.itba.pod.grpc.client.utils.ClientArgs;
 import ar.edu.itba.pod.grpc.client.utils.callback.CounterRangeAssignmentResponseFutureCallback;
 import ar.edu.itba.pod.grpc.client.utils.callback.FreeCounterRangeResponseFutureCallback;
+import ar.edu.itba.pod.grpc.client.utils.callback.ListCountersResponseFutureCallback;
 import ar.edu.itba.pod.grpc.client.utils.observers.PerformCheckInStreamObserver;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -46,7 +47,30 @@ public class CounterClient {
 
             }
             case "listCounters" -> {
-                System.out.println("TODO: Lis Sectors");
+                final String counterFrom = argMap.get(ClientArgs.COUNTER_FROM.getValue());
+                final String counterTo = argMap.get(ClientArgs.COUNTER_TO.getValue());
+                final String sectorName = argMap.get(ClientArgs.SECTOR.getValue());
+                checkNullArgs(counterFrom, "Counter Form Value Not Specified");
+                checkNullArgs(counterTo, "Counter To Value Not Specified");
+                checkNullArgs(sectorName, "Sector Name Not Specified");
+                int counterFromInt = Integer.parseInt(counterFrom);
+                int counterToInt = Integer.parseInt(counterTo);
+
+
+                latch = new CountDownLatch(1);
+
+                ListCountersRequest request = ListCountersRequest.newBuilder()
+                        .setSectorName(sectorName)
+                        .setFromVal(counterFromInt)
+                        .setToVal(counterToInt)
+                        .build();
+
+                ListenableFuture<ListCountersResponse> listenableFuture = stub.listCounters(request);
+                Futures.addCallback(
+                        listenableFuture,
+                        new ListCountersResponseFutureCallback(logger, latch, sectorName, counterFromInt, counterToInt),
+                        Runnable::run
+                );
             }
             case "assignCounters" -> {
                 final String countVal = argMap.get(ClientArgs.COUNTER_COUNT.getValue());

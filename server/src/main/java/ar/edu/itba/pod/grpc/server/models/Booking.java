@@ -5,13 +5,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Booking {
 
     private final String code;
-    private final Airline airline;
     private final Flight flight;
     private final AtomicBoolean checkedIn;
 
-    public Booking(String code, Airline airline, Flight flight) {
+    public Booking(String code, Flight flight) {
         this.code = code;
-        this.airline = airline;
         this.flight = flight;
         this.checkedIn = new AtomicBoolean(false);
     }
@@ -31,9 +29,5 @@ public class Booking {
 
     public Flight getFlight() {
         return flight;
-    }
-
-    public Airline getAirline() {
-        return airline;
     }
 }

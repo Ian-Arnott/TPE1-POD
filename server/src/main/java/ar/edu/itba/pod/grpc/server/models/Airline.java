@@ -5,18 +5,18 @@ import java.util.concurrent.ConcurrentMap;
 
 public class Airline {
 
-    private final String code;
+    private final String name;
     private final ConcurrentMap<String, Booking> bookings;
     private final ConcurrentMap<String, Flight> flights;
 
-    public Airline(String code) {
-        this.code = code;
+    public Airline(String name) {
+        this.name = name;
         this.bookings = new ConcurrentHashMap<>();
         this.flights = new ConcurrentHashMap<>();
     }
 
-    public String getCode() {
-        return code;
+    public String getName() {
+        return name;
     }
 
     public ConcurrentMap<String, Booking> getBookings() {

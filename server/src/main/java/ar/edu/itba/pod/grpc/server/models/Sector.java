@@ -9,7 +9,6 @@ public class Sector {
     private final String name;
     private final Map<Integer, Counter> counterMap;
     private final Map<String, ConcurrentLinkedQueue<Flight>> pendingFlightMap;
-
     public Sector(String name) {
         this.name = name;
         this.counterMap = new ConcurrentSkipListMap<>();
@@ -24,11 +23,10 @@ public class Sector {
         return pendingFlightMap;
     }
 
-    public synchronized AtomicInteger addCounters(AtomicInteger lastCounterAdded, int counterAmount) {
+    public void addCounters(int lastCounterAdded, int counterAmount) {
         for (int i = 0; i < counterAmount; i++) {
-            counterMap.put(lastCounterAdded.getAndIncrement(), new Counter());
+            counterMap.put(lastCounterAdded + i, new Counter(lastCounterAdded + i));
         }
-        return lastCounterAdded;
     }
 
     public synchronized Map<Integer, Counter> getCounterMap() {
