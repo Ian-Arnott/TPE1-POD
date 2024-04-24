@@ -1,7 +1,5 @@
 package ar.edu.itba.pod.grpc.server.models.response;
 
-import airport.CheckInServiceOuterClass;
-
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PassengerCheckInResponseModel {

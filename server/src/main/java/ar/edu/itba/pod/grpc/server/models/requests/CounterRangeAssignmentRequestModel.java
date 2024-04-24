@@ -43,7 +43,7 @@ public class CounterRangeAssignmentRequestModel {
     }
 
     public static CounterRangeAssignmentRequestModel fromCounterRangAssignmentRequest(
-            final CounterAssignmentServiceOuterClass.CounterRangeAssigmentRequest request) {
+            final CounterAssignmentServiceOuterClass.CounterRangeAssignmentRequest request) {
         return new CounterRangeAssignmentRequestModel(
                 request.getCountVal(),
                 request.getSectorName(),
