@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
+
+package airport;
+
+service CounterAssignmentService {
+  rpc ListSectors(google.protobuf.Empty) returns(ListSectorsResponse);
+  rpc CounterRangeAssigment(CounterRangeAssigmentRequest) returns(CounterRangeAssigmentResponse);
+  rpc FreeCounterRange(FreeCounterRangeRequest) returns(FreeCounterRangeResponse);
+  rpc PerformCounterCheckIn(PerformCounterCheckInRequest) returns(stream PerformCounterCheckInResponse);
+}
+
+message ListSectorsResponse {
+  repeated ListSectorsItem items = 1;
+}
+
+message ListSectorsItem {
+  string sectorName = 1;
+  repeated int32 counters = 2;
+}
+
+message CounterRangeAssigmentRequest {
+  int32 countVal = 1;
+  string sectorName = 2;
+  repeated string flight = 3;
+  string airlineName = 4;
+}
+
+message CounterRangeAssigmentResponse {
+  int32 amountCheckingIn = 1;
+  int32 lastCheckingIn = 2;
+  int32 amountPending= 3;
+  int32 amountPendingAhead = 4;
+}
+
+message FreeCounterRangeRequest {
+  string sectorName = 1;
+  int32 fromVal = 2;
+  string airline = 3;
+}
+
+message FreeCounterRangeResponse {
+  int32 freedAmount = 1;
+  repeated string flights = 2;
+}
+
+message PerformCounterCheckInRequest {
+  int32 fromVal = 1;
+  string sectorName = 2;
+  string airlineName = 3;
+}
+
+message PerformCounterCheckInResponse {
+  int32 counter = 1;
+  bool successful = 2;
+  string flight = 3;
+  string booking = 4;
+}

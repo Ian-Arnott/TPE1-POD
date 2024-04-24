@@ -36,10 +36,20 @@ public class GlobalExceptionHandlerInterceptor implements ServerInterceptor {
             }
         }
 
-        private final Map<Class<? extends Throwable>, Code> errorCodesByException = Map.of(
-                SectorAlreadyExistsException.class, Code.ALREADY_EXISTS,
-                SectorDoesNotExistsException.class, Code.NOT_FOUND,
-                NonPositiveCounterException.class, Code.INVALID_ARGUMENT
+        private static final Map<Class<? extends Throwable>, Code> errorCodesByException = Map.ofEntries(
+                Map.entry(IllegalArgumentException.class, Code.INVALID_ARGUMENT),
+                Map.entry(SectorAlreadyExistsException.class, Code.ALREADY_EXISTS),
+                Map.entry(SectorDoesNotExistsException.class, Code.NOT_FOUND),
+                Map.entry(NonPositiveCounterException.class, Code.INVALID_ARGUMENT),
+                Map.entry(BookingAlreadyExistsException.class, Code.ALREADY_EXISTS),
+                Map.entry(FlightExistsForOtherAirlineException.class, Code.ALREADY_EXISTS),
+                Map.entry(FlightDoesNotExistsException.class, Code.NOT_FOUND),
+                Map.entry(FlightDoesNotHaveBookingsException.class, Code.ABORTED),
+                Map.entry(FlightStatusException.class, Code.ABORTED),
+                Map.entry(CounterIsCheckingInOtherAirlineException.class, Code.ABORTED),
+                Map.entry(CounterIsNotFirstInRangeException.class, Code.ABORTED),
+                Map.entry(CountersAreNotAssignedException.class, Code.ABORTED),
+                Map.entry(StillCheckingInBookingsException.class, Code.ABORTED)
         );
 
         private void handleException(RuntimeException exception, ServerCall<T, R> serverCall, Metadata headers) {

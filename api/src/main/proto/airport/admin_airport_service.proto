@@ -8,7 +8,7 @@ package airport;
 service AdminAirportService {
   rpc AddSector(AddSectorRequest) returns(google.protobuf.BoolValue);
   rpc AddCounters(AddCountersRequest) returns(AddCountersResponse);
-  rpc Manifest(ManifestRequest) returns(ManifestResponse);
+  rpc Manifest(ManifestRequest) returns(google.protobuf.Empty);
 }
 
 message AddSectorRequest {
@@ -28,8 +28,4 @@ message ManifestRequest {
 
 message AddCountersResponse {
   int32 lastCounterAdded = 1;
-}
-
-message ManifestResponse {
-  string message = 1;
 }

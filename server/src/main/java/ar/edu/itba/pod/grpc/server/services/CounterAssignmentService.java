@@ -1,7 +1,12 @@
 package ar.edu.itba.pod.grpc.server.services;
 
-import counter.CounterAssignmentServiceGrpc;
-import counter.CounterAssignmentServiceOuterClass;
+import airport.CounterAssignmentServiceGrpc;
+import airport.CounterAssignmentServiceOuterClass;
+import ar.edu.itba.pod.grpc.server.models.requests.CounterRangeAssignmentRequestModel;
+import ar.edu.itba.pod.grpc.server.models.requests.FreeCounterRangeRequestModel;
+import ar.edu.itba.pod.grpc.server.models.requests.PerformCounterCheckInRequestModel;
+import ar.edu.itba.pod.grpc.server.models.response.CounterRangeAssignmentResponseModel;
+import ar.edu.itba.pod.grpc.server.models.response.FreeCounterRangeResponseModel;
 import ar.edu.itba.pod.grpc.server.repository.AirportRepository;
 import com.google.protobuf.Empty;
 import io.grpc.stub.StreamObserver;
@@ -34,5 +39,35 @@ public class CounterAssignmentService extends CounterAssignmentServiceGrpc.Count
         logger.info("SERVER - The listSectors action is finished.");
         responseObserver.onNext(listSectorsResponse);
         responseObserver.onCompleted();
+    }
+
+    @Override
+    public void counterRangeAssigment(CounterAssignmentServiceOuterClass.CounterRangeAssigmentRequest request, StreamObserver<CounterAssignmentServiceOuterClass.CounterRangeAssigmentResponse> responseObserver) {
+        CounterRangeAssignmentRequestModel requestModel = CounterRangeAssignmentRequestModel.fromCounterRangAssignmentRequest(request);
+
+        CounterRangeAssignmentResponseModel responseModel = repository.counterRangeAssignment(requestModel);
+        responseObserver.onNext(CounterAssignmentServiceOuterClass.CounterRangeAssigmentResponse.newBuilder()
+                .setAmountCheckingIn(responseModel.getAmountCheckingIn())
+                .setAmountPending(responseModel.getAmountPending())
+                .setLastCheckingIn(responseModel.getLastCheckingIn())
+                .setAmountPendingAhead(responseModel.getAmountPendingAhead()).build());
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void freeCounterRange(CounterAssignmentServiceOuterClass.FreeCounterRangeRequest request, StreamObserver<CounterAssignmentServiceOuterClass.FreeCounterRangeResponse> responseObserver) {
+        FreeCounterRangeRequestModel requestModel = FreeCounterRangeRequestModel.fromFreeCounterRequest(request);
+
+        FreeCounterRangeResponseModel responseModel = repository.freeCounterRange(requestModel);
+        responseObserver.onNext(CounterAssignmentServiceOuterClass.FreeCounterRangeResponse.newBuilder()
+                .addAllFlights(responseModel.getFlights())
+                .setFreedAmount(responseModel.getFreedAmount().get()).build());
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void performCounterCheckIn(CounterAssignmentServiceOuterClass.PerformCounterCheckInRequest request, StreamObserver<CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse> responseObserver) {
+        PerformCounterCheckInRequestModel requestModel = PerformCounterCheckInRequestModel.fromPerformCounterCheckInRequest(request);
+        repository.performCounterCheckIn(requestModel, responseObserver);
     }
 }

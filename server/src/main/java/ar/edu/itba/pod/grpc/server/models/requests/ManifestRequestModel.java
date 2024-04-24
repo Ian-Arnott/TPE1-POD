@@ -2,8 +2,6 @@ package ar.edu.itba.pod.grpc.server.models.requests;
 
 import airport.AdminAirportServiceOuterClass;
 
-import java.util.jar.Manifest;
-
 public class ManifestRequestModel {
     private final String booking;
     private final String flight;

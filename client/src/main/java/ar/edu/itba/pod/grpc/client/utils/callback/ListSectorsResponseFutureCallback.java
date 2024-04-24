@@ -1,6 +1,6 @@
 package ar.edu.itba.pod.grpc.client.utils.callback;
 
-import counter.CounterAssignmentServiceOuterClass;
+import airport.CounterAssignmentServiceOuterClass;
 import org.slf4j.Logger;
 
 import java.util.HashMap;

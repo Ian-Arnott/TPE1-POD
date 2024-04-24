@@ -9,6 +9,7 @@ import ar.edu.itba.pod.grpc.client.utils.callback.ManifestResponseFutureCallback
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.BoolValue;
+import com.google.protobuf.Empty;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.slf4j.Logger;
@@ -78,7 +79,7 @@ public class AdminClient {
                 List<String[]> csvData = getCSVData(inPath);
                 latch = new CountDownLatch(csvData.size());
                 for (String[] data : csvData) {
-                    ListenableFuture<ManifestResponse> listenableFuture;
+                    ListenableFuture<Empty> listenableFuture;
                     ManifestRequest manifestRequest = ManifestRequest.newBuilder().setBooking(data[0])
                             .setFlight(data[1]).setAirline(data[2]).build();
                     listenableFuture = stub.manifest(manifestRequest);

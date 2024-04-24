@@ -10,6 +10,8 @@ public enum ClientArgs {
     COUNTER_TO("counterTo"),
     FLIGHTS("flights"),
     AIRLINE("airline"),
+    COUNTER("counter"),
+    BOOKING("booking"),
     COUNTER_COUNT("counterCount");
 
     private final String value;
