@@ -23,11 +23,11 @@ public class CounterAssignmentService extends CounterAssignmentServiceGrpc.Count
     }
 
     @Override
-    public void counterRangeAssigment(CounterRangeAssigmentRequest request, StreamObserver<CounterRangeAssigmentResponse> responseObserver) {
+    public void counterRangeAssignment(CounterRangeAssignmentRequest request, StreamObserver<CounterRangeAssignmentResponse> responseObserver) {
         CounterRangeAssignmentRequestModel requestModel = CounterRangeAssignmentRequestModel.fromCounterRangAssignmentRequest(request);
 
         CounterRangeAssignmentResponseModel responseModel = repository.counterRangeAssignment(requestModel);
-        responseObserver.onNext(CounterRangeAssigmentResponse.newBuilder()
+        responseObserver.onNext(CounterRangeAssignmentResponse.newBuilder()
                 .setAmountCheckingIn(responseModel.getAmountCheckingIn())
                 .setAmountPending(responseModel.getAmountPending())
                 .setLastCheckingIn(responseModel.getLastCheckingIn())

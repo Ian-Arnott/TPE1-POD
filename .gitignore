@@ -17,3 +17,8 @@ buildNumber.properties
 tmp/
 
 *.csv
+
+### Santiago ###
+.*.swp
+test.sh
+manifest_generate.sh

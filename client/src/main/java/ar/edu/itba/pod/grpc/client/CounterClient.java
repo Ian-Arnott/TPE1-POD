@@ -3,7 +3,7 @@ package ar.edu.itba.pod.grpc.client;
 import airport.CounterAssignmentServiceGrpc;
 import airport.CounterAssignmentServiceOuterClass.*;
 import ar.edu.itba.pod.grpc.client.utils.ClientArgs;
-import ar.edu.itba.pod.grpc.client.utils.callback.CounterRangeAssigmentResponseFutureCallback;
+import ar.edu.itba.pod.grpc.client.utils.callback.CounterRangeAssignmentResponseFutureCallback;
 import ar.edu.itba.pod.grpc.client.utils.callback.FreeCounterRangeResponseFutureCallback;
 import ar.edu.itba.pod.grpc.client.utils.observers.PerformCheckInStreamObserver;
 import com.google.common.util.concurrent.Futures;
@@ -45,6 +45,9 @@ public class CounterClient {
             case "listSectors" -> {
 
             }
+            case "listCounters" -> {
+                System.out.println("TODO: Lis Sectors");
+            }
             case "assignCounters" -> {
                 final String countVal = argMap.get(ClientArgs.COUNTER_COUNT.getValue());
                 final String sectorName = argMap.get(ClientArgs.SECTOR.getValue());
@@ -58,13 +61,13 @@ public class CounterClient {
 
                 List<String> flightList = Arrays.asList(flights.split("\\|"));
 
-                CounterRangeAssigmentRequest request = CounterRangeAssigmentRequest.newBuilder()
+                CounterRangeAssignmentRequest request = CounterRangeAssignmentRequest.newBuilder()
                         .setCountVal(Integer.parseInt(countVal))
                         .setSectorName(sectorName)
                         .addAllFlight(flightList)
                         .setAirlineName(airline).build();
-                ListenableFuture<CounterRangeAssigmentResponse> listenableFuture = stub.counterRangeAssigment(request);
-                Futures.addCallback(listenableFuture, new CounterRangeAssigmentResponseFutureCallback(logger,latch, sectorName, airline, flights), Runnable::run);
+                ListenableFuture<CounterRangeAssignmentResponse> listenableFuture = stub.counterRangeAssignment(request);
+                Futures.addCallback(listenableFuture, new CounterRangeAssignmentResponseFutureCallback(logger,latch, sectorName, airline, flights), Runnable::run);
             }
             case "freeCounters" -> {
                 String fromVal = argMap.get(ClientArgs.COUNTER_FROM.getValue());

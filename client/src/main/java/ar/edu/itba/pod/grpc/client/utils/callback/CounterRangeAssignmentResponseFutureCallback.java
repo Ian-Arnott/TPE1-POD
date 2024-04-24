@@ -5,13 +5,13 @@ import org.slf4j.Logger;
 
 import java.util.concurrent.CountDownLatch;
 
-public class CounterRangeAssigmentResponseFutureCallback extends AbstractFutureCallback<CounterAssignmentServiceOuterClass.CounterRangeAssigmentResponse> {
+public class CounterRangeAssignmentResponseFutureCallback extends AbstractFutureCallback<CounterAssignmentServiceOuterClass.CounterRangeAssignmentResponse> {
 
     private final String sectorName;
     private final String airline;
     private final String flights;
 
-    public CounterRangeAssigmentResponseFutureCallback(Logger logger, CountDownLatch latch, String sectorName, String airline, String flights) {
+    public CounterRangeAssignmentResponseFutureCallback(Logger logger, CountDownLatch latch, String sectorName, String airline, String flights) {
         super(logger,latch);
         this.sectorName = sectorName;
         this.airline = airline;
@@ -19,7 +19,7 @@ public class CounterRangeAssigmentResponseFutureCallback extends AbstractFutureC
     }
 
     @Override
-    public void onSuccess(CounterAssignmentServiceOuterClass.CounterRangeAssigmentResponse result) {
+    public void onSuccess(CounterAssignmentServiceOuterClass.CounterRangeAssignmentResponse result) {
         String response;
         if (result.getAmountPending() == 0) {
             response = String.format("%d counters (%d-%d) in Sector %s are now checking in passengers from %s %s flights",
