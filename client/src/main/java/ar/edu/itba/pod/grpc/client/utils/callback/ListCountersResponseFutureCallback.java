@@ -59,11 +59,9 @@ public class ListCountersResponseFutureCallback extends AbstractFutureCallback<C
                  currentBlock.add(currentItem);
                  currentItem = itemIterator.next();
                  currentVal++;
-                 System.out.printf("addd! %d\n", currentBlock.size());
              } else {
                  // print line
                  if (!currentBlock.isEmpty()) {
-                     System.out.println("entre");
                      CounterAssignmentServiceOuterClass.ListCounterItem firstItem = currentBlock.getFirst();
                      stringBuilder.append("(").append(firstItem.getCounterNum()).append("-").append(currentVal).append(")\t").append(firstItem.getAirlineName()).append("\t");
 

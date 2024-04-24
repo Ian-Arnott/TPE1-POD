@@ -1,8 +1,21 @@
 package ar.edu.itba.pod.grpc.server.repository;
 
+import airport.AdminAirportServiceOuterClass;
+import ar.edu.itba.pod.grpc.server.exeptions.SectorMapIsEmptyException;
 import airport.CounterAssignmentServiceOuterClass;
+import ar.edu.itba.pod.grpc.server.exeptions.NonPositiveCounterException;
+import ar.edu.itba.pod.grpc.server.exeptions.SectorAlreadyExistsException;
+import ar.edu.itba.pod.grpc.server.exeptions.SectorDoesNotExistsException;
+import ar.edu.itba.pod.grpc.server.models.Sector;
+import ar.edu.itba.pod.grpc.server.models.requests.ManifestRequestModel;
+import com.google.protobuf.Empty;
+
+import java.util.*;
 import ar.edu.itba.pod.grpc.server.exeptions.*;
 import ar.edu.itba.pod.grpc.server.models.*;
+import ar.edu.itba.pod.grpc.server.models.Booking;
+import ar.edu.itba.pod.grpc.server.models.Counter;
+import ar.edu.itba.pod.grpc.server.models.Flight;
 import ar.edu.itba.pod.grpc.server.models.requests.*;
 import ar.edu.itba.pod.grpc.server.models.response.CounterRangeAssignmentResponseModel;
 import ar.edu.itba.pod.grpc.server.models.response.FreeCounterRangeResponseModel;
@@ -120,6 +133,16 @@ public class AirportRepository {
 
     public boolean flightCheckedIn(String flight) {
         return flightConcurrentMap.get(flight).getCheckedIn().get();
+    }
+
+    public Map<String, Set<Integer>> listSectors() {
+        if (sectorMap.isEmpty()) throw new SectorMapIsEmptyException();
+
+        Map<String, Set<Integer>> res = new HashMap<>();
+
+        sectorMap.forEach((sectorName, sector) -> res.put(sectorName, sector.getCounterMap().keySet()));
+
+        return res;
     }
 
     public synchronized CounterRangeAssignmentResponseModel counterRangeAssignment(CounterRangeAssignmentRequestModel requestModel) {
@@ -299,5 +322,4 @@ public class AirportRepository {
         counterMap.get(counter).getBookingQueue().add(booking);
         return new PassengerCheckInResponseModel(new AtomicInteger(lastCounter),peopleInLine,booking.getFlight().getCode(),booking.getFlight().getAirline().getName());
     }
-
 }

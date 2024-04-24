@@ -14,7 +14,12 @@ service CounterAssignmentService {
 }
 
 message ListSectorsResponse {
-  string message = 1;
+  repeated ListSectorsItem items = 1;
+}
+
+message ListSectorsItem {
+  string sectorName = 1;
+  repeated int32 counters = 2;
 }
 
 message ListCountersRequest {

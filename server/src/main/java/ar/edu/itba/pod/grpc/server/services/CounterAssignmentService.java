@@ -4,6 +4,7 @@ import airport.CounterAssignmentServiceGrpc;
 import airport.CounterAssignmentServiceOuterClass.*;
 import ar.edu.itba.pod.grpc.server.models.Counter;
 import ar.edu.itba.pod.grpc.server.models.Flight;
+import airport.CounterAssignmentServiceOuterClass;
 import ar.edu.itba.pod.grpc.server.models.requests.CounterRangeAssignmentRequestModel;
 import ar.edu.itba.pod.grpc.server.models.requests.FreeCounterRangeRequestModel;
 import ar.edu.itba.pod.grpc.server.models.requests.PerformCounterCheckInRequestModel;
@@ -17,14 +18,32 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class CounterAssignmentService extends CounterAssignmentServiceGrpc.CounterAssignmentServiceImplBase {
-    private final static Logger logger = LoggerFactory.getLogger(AdminAirportService.class);
+    private final static Logger logger = LoggerFactory.getLogger(CounterAssignmentService.class);
     private static final AirportRepository repository = AirportRepository.getInstance();
 
     @Override
-    public void listSectors(Empty request, StreamObserver<ListSectorsResponse> responseObserver) {
-        super.listSectors(request, responseObserver);
+    public void listSectors(Empty request, StreamObserver<CounterAssignmentServiceOuterClass.ListSectorsResponse> responseObserver) {
+        Map<String, Set<Integer>> res = repository.listSectors();
+
+        List<CounterAssignmentServiceOuterClass.ListSectorsItem> listSectorsRes = new ArrayList<>();
+        res.forEach((sectorName, countersSet) -> listSectorsRes.add(CounterAssignmentServiceOuterClass.ListSectorsItem
+                .newBuilder()
+                .setSectorName(sectorName)
+                .addAllCounters(countersSet)
+                .build()));
+
+        CounterAssignmentServiceOuterClass.ListSectorsResponse listSectorsResponse =
+                CounterAssignmentServiceOuterClass.ListSectorsResponse.newBuilder().addAllItems(listSectorsRes).build();
+
+        logger.info("SERVER - The listSectors action is finished.");
+        responseObserver.onNext(listSectorsResponse);
+        responseObserver.onCompleted();
     }
 
     @Override
@@ -50,7 +69,7 @@ public class CounterAssignmentService extends CounterAssignmentServiceGrpc.Count
         CounterRangeAssignmentRequestModel requestModel = CounterRangeAssignmentRequestModel.fromCounterRangAssignmentRequest(request);
 
         CounterRangeAssignmentResponseModel responseModel = repository.counterRangeAssignment(requestModel);
-        responseObserver.onNext(CounterRangeAssignmentResponse.newBuilder()
+        responseObserver.onNext(CounterAssignmentServiceOuterClass.CounterRangeAssignmentResponse.newBuilder()
                 .setAmountCheckingIn(responseModel.getAmountCheckingIn())
                 .setAmountPending(responseModel.getAmountPending())
                 .setLastCheckingIn(responseModel.getLastCheckingIn())
@@ -59,18 +78,18 @@ public class CounterAssignmentService extends CounterAssignmentServiceGrpc.Count
     }
 
     @Override
-    public void freeCounterRange(FreeCounterRangeRequest request, StreamObserver<FreeCounterRangeResponse> responseObserver) {
+    public void freeCounterRange(CounterAssignmentServiceOuterClass.FreeCounterRangeRequest request, StreamObserver<CounterAssignmentServiceOuterClass.FreeCounterRangeResponse> responseObserver) {
         FreeCounterRangeRequestModel requestModel = FreeCounterRangeRequestModel.fromFreeCounterRequest(request);
 
         FreeCounterRangeResponseModel responseModel = repository.freeCounterRange(requestModel);
-        responseObserver.onNext(FreeCounterRangeResponse.newBuilder()
+        responseObserver.onNext(CounterAssignmentServiceOuterClass.FreeCounterRangeResponse.newBuilder()
                 .addAllFlights(responseModel.getFlights())
                 .setFreedAmount(responseModel.getFreedAmount().get()).build());
         responseObserver.onCompleted();
     }
 
     @Override
-    public void performCounterCheckIn(PerformCounterCheckInRequest request, StreamObserver<PerformCounterCheckInResponse> responseObserver) {
+    public void performCounterCheckIn(CounterAssignmentServiceOuterClass.PerformCounterCheckInRequest request, StreamObserver<CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse> responseObserver) {
         PerformCounterCheckInRequestModel requestModel = PerformCounterCheckInRequestModel.fromPerformCounterCheckInRequest(request);
         repository.performCounterCheckIn(requestModel, responseObserver);
     }
