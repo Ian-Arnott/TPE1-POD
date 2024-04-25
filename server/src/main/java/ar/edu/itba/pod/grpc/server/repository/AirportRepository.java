@@ -321,7 +321,7 @@ public class AirportRepository {
         if (airline == null)
             throw new AirlineDoesNotExistException(airlineName);
         airline.registerForNotifications(responseObserver);
-        airline.notifyRegistered();
+        //airline.notifyRegistered();
     }
 
     public StreamObserver<NotifyServiceOuterClass.Notification> unregisterForNotification(String airlineName) {
