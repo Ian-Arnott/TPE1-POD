@@ -21,11 +21,11 @@ public class FreeCounterRangeResponseFutureCallback extends AbstractFutureCallba
     public void onSuccess(CounterAssignmentServiceOuterClass.FreeCounterRangeResponse result) {
         String response;
         StringBuilder flights = new StringBuilder();
-        AtomicInteger counter = new AtomicInteger(1);
+        AtomicInteger counter = new AtomicInteger();
         result.getFlightsList().forEach(flight -> {
             flights.append(flight);
             counter.getAndIncrement();
-            if (counter.get() < flights.length())
+            if (counter.get() < result.getFlightsList().size())
                 flights.append("|");
         });
         response = String.format("Ended check-in for flights %s on %d counters (%d-%d) in Sector %s",
