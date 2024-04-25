@@ -3,14 +3,12 @@ package ar.edu.itba.pod.grpc.client;
 import airport.CounterAssignmentServiceGrpc;
 import airport.CounterAssignmentServiceOuterClass;
 import ar.edu.itba.pod.grpc.client.utils.ClientArgs;
-import ar.edu.itba.pod.grpc.client.utils.callback.ListSectorsResponseFutureCallback;
+import ar.edu.itba.pod.grpc.client.utils.callback.*;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.Empty;
-import ar.edu.itba.pod.grpc.client.utils.callback.CounterRangeAssignmentResponseFutureCallback;
-import ar.edu.itba.pod.grpc.client.utils.callback.FreeCounterRangeResponseFutureCallback;
-import ar.edu.itba.pod.grpc.client.utils.callback.ListCountersResponseFutureCallback;
 import ar.edu.itba.pod.grpc.client.utils.observers.PerformCheckInStreamObserver;
+import com.google.protobuf.StringValue;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
@@ -48,14 +46,6 @@ public class CounterClient {
             case "listSectors" -> {
                 latch = new CountDownLatch(1);
 
-//                for (String[] data : csvData) {
-//                    ListenableFuture<AdminAirportServiceOuterClass.ManifestResponse> listenableFuture;
-//                    AdminAirportServiceOuterClass.ManifestRequest manifestRequest = AdminAirportServiceOuterClass.ManifestRequest.newBuilder().setBooking(data[0])
-//                            .setFlight(data[1]).setAirline(data[2]).build();
-//                    listenableFuture = stub.manifest(manifestRequest);
-//                    Futures.addCallback(listenableFuture,
-//                            new ManifestResponseFutureCallback(logger,latch,data[0],data[1],data[2]), Runnable::run);
-//                }
                 ListenableFuture<CounterAssignmentServiceOuterClass.ListSectorsResponse> listenableFuture =
                         stub.listSectors(Empty.getDefaultInstance());
                 Futures.addCallback(
@@ -150,6 +140,19 @@ public class CounterClient {
                 StreamObserver<CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse> observer = new PerformCheckInStreamObserver(latch);
                 serviceStub.performCounterCheckIn(request,observer);
                 latch.await();
+            }
+            case "listPendingAssignments" -> {
+                String sectorName = argMap.get(ClientArgs.SECTOR.getValue());
+
+                latch = new CountDownLatch(1);
+
+                ListenableFuture<CounterAssignmentServiceOuterClass.ListPendingAssignmentsResponse> listenableFuture =
+                        stub.listPendingAssignments(StringValue.of(sectorName));
+                Futures.addCallback(
+                        listenableFuture,
+                        new ListPendingAssignmentsResponseFutureCallback(logger, latch),
+                        Runnable::run
+                );
             }
         }
 
