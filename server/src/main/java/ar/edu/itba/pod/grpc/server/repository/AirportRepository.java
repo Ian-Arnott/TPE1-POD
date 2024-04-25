@@ -18,6 +18,7 @@ import ar.edu.itba.pod.grpc.server.models.requests.*;
 import ar.edu.itba.pod.grpc.server.models.response.CounterRangeAssignmentResponseModel;
 import ar.edu.itba.pod.grpc.server.models.response.FreeCounterRangeResponseModel;
 import ar.edu.itba.pod.grpc.server.models.response.PassengerCheckInResponseModel;
+import com.google.protobuf.StringValue;
 import io.grpc.stub.StreamObserver;
 
 import java.util.ArrayList;
@@ -179,7 +180,9 @@ public class AirportRepository {
             for (Flight flight : flightQueue) {
                 flight.getPending().set(true);
             }
-            pendingAssignments.add(new PendingAssignment(flightQueue, requestModel.getCountVal()));
+            pendingAssignments.add(
+                    new PendingAssignment(flightQueue, requestModel.getAirlineName(), requestModel.getCountVal())
+            );
             return responseModel;
         } else {
             CounterRange counterRange = new CounterRange(availableCounters, airlines.get(requestModel.getAirlineName()), flightQueue);
@@ -302,5 +305,13 @@ public class AirportRepository {
                 booking.getFlight().getCode(),
                 booking.getFlight().getAirline().getName()
         );
+    }
+
+    public ConcurrentLinkedQueue<PendingAssignment> listPendingAssignments(StringValue sectorName) {
+        String sectorNameString = sectorName.getValue();
+
+        if (!sectorMap.containsKey(sectorNameString)) throw new SectorDoesNotExistsException(sectorNameString);
+
+        return sectorMap.get(sectorNameString).getPendingAssignments();
     }
 }

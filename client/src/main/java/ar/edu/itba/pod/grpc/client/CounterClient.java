@@ -150,7 +150,7 @@ public class CounterClient {
                         stub.listPendingAssignments(StringValue.of(sectorName));
                 Futures.addCallback(
                         listenableFuture,
-                        new ListPendingAssignmentsResponseFutureCallback(logger, latch),
+                        new ListPendingAssignmentsResponseFutureCallback(logger, latch, sectorName),
                         Runnable::run
                 );
             }

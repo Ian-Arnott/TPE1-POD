@@ -17,11 +17,11 @@ public class ListSectorsResponseFutureCallback extends AbstractFutureCallback<Co
         getLatch().countDown();
     }
 
-    public static void printOutput(CounterAssignmentServiceOuterClass.ListSectorsResponse map) {
+    public static void printOutput(CounterAssignmentServiceOuterClass.ListSectorsResponse res) {
         System.out.println("Sectors   Counters");
         System.out.println("###################");
 
-        for (CounterAssignmentServiceOuterClass.ListSectorsItem item : map.getItemsList()) {
+        for (CounterAssignmentServiceOuterClass.ListSectorsItem item : res.getItemsList()) {
             String sector = item.getSectorName();
             List<Integer> counters = item.getCountersList();
 
