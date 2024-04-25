@@ -3,9 +3,7 @@ package ar.edu.itba.pod.grpc.client.utils.callback;
 import airport.CounterAssignmentServiceOuterClass;
 import org.slf4j.Logger;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 public class ListSectorsResponseFutureCallback extends AbstractFutureCallback<CounterAssignmentServiceOuterClass.ListSectorsResponse> {
@@ -15,22 +13,17 @@ public class ListSectorsResponseFutureCallback extends AbstractFutureCallback<Co
 
     @Override
     public void onSuccess(CounterAssignmentServiceOuterClass.ListSectorsResponse result) {
-        Map<String, List<Integer>> resultMap = new HashMap<>();
-
-        result.getItemsList().forEach((item) -> resultMap.put(item.getSectorName(), item.getCountersList()));
-
-        printOutput(resultMap);
-
+        printOutput(result);
         getLatch().countDown();
     }
 
-    public static void printOutput(Map<String, List<Integer>> map) {
+    public static void printOutput(CounterAssignmentServiceOuterClass.ListSectorsResponse res) {
         System.out.println("Sectors   Counters");
         System.out.println("###################");
 
-        for (Map.Entry<String, List<Integer>> entry : map.entrySet()) {
-            String sector = entry.getKey();
-            List<Integer> counters = entry.getValue();
+        for (CounterAssignmentServiceOuterClass.ListSectorsItem item : res.getItemsList()) {
+            String sector = item.getSectorName();
+            List<Integer> counters = item.getCountersList();
 
             StringBuilder counterString = new StringBuilder();
             if (counters.isEmpty()) {

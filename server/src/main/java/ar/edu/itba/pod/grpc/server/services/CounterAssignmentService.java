@@ -6,6 +6,7 @@ import ar.edu.itba.pod.grpc.server.models.Airline;
 import ar.edu.itba.pod.grpc.server.models.Counter;
 import ar.edu.itba.pod.grpc.server.models.Flight;
 import airport.CounterAssignmentServiceOuterClass;
+import ar.edu.itba.pod.grpc.server.models.PendingAssignment;
 import ar.edu.itba.pod.grpc.server.models.requests.CounterRangeAssignmentRequestModel;
 import ar.edu.itba.pod.grpc.server.models.requests.FreeCounterRangeRequestModel;
 import ar.edu.itba.pod.grpc.server.models.requests.PerformCounterCheckInRequestModel;
@@ -13,11 +14,13 @@ import ar.edu.itba.pod.grpc.server.models.response.CounterRangeAssignmentRespons
 import ar.edu.itba.pod.grpc.server.models.response.FreeCounterRangeResponseModel;
 import ar.edu.itba.pod.grpc.server.repository.AirportRepository;
 import com.google.protobuf.Empty;
+import com.google.protobuf.StringValue;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.Map;
@@ -94,5 +97,25 @@ public class CounterAssignmentService extends CounterAssignmentServiceGrpc.Count
     public void performCounterCheckIn(CounterAssignmentServiceOuterClass.PerformCounterCheckInRequest request, StreamObserver<CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse> responseObserver) {
         PerformCounterCheckInRequestModel requestModel = PerformCounterCheckInRequestModel.fromPerformCounterCheckInRequest(request);
         repository.performCounterCheckIn(requestModel, responseObserver);
+    }
+
+    @Override
+    public void listPendingAssignments(StringValue request, StreamObserver<CounterAssignmentServiceOuterClass.ListPendingAssignmentsResponse> responseObserver) {
+        ConcurrentLinkedQueue<PendingAssignment> res = repository.listPendingAssignments(request);
+
+        List<CounterAssignmentServiceOuterClass.ListPendingAssignmentsItem> listPendingAssignmentsRes = new ArrayList<>();
+        res.forEach((pendingAssignment) -> listPendingAssignmentsRes.add(CounterAssignmentServiceOuterClass.ListPendingAssignmentsItem
+                .newBuilder()
+                .setCountersAmount(pendingAssignment.getCountVal().get())
+                .setAirlineName(pendingAssignment.getAirlineName())
+                .addAllFlights(pendingAssignment.getFlights().stream().map(Flight::getCode).toList())
+                .build()));
+
+        CounterAssignmentServiceOuterClass.ListPendingAssignmentsResponse listPendingAssignmentsResponse =
+                CounterAssignmentServiceOuterClass.ListPendingAssignmentsResponse.newBuilder().addAllItems(listPendingAssignmentsRes).build();
+
+        logger.info("SERVER - The listPendingAssignments action is finished.");
+        responseObserver.onNext(listPendingAssignmentsResponse);
+        responseObserver.onCompleted();
     }
 }
