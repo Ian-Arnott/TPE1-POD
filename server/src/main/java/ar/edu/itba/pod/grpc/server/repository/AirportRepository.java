@@ -1,6 +1,5 @@
 package ar.edu.itba.pod.grpc.server.repository;
 
-import airport.AdminAirportServiceOuterClass;
 import ar.edu.itba.pod.grpc.server.exeptions.SectorMapIsEmptyException;
 import airport.CounterAssignmentServiceOuterClass;
 import ar.edu.itba.pod.grpc.server.exeptions.NonPositiveCounterException;
@@ -8,7 +7,6 @@ import ar.edu.itba.pod.grpc.server.exeptions.SectorAlreadyExistsException;
 import ar.edu.itba.pod.grpc.server.exeptions.SectorDoesNotExistsException;
 import ar.edu.itba.pod.grpc.server.models.Sector;
 import ar.edu.itba.pod.grpc.server.models.requests.ManifestRequestModel;
-import com.google.protobuf.Empty;
 
 import java.util.*;
 import ar.edu.itba.pod.grpc.server.exeptions.*;
@@ -25,7 +23,6 @@ import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
@@ -173,15 +170,15 @@ public class AirportRepository {
         Map<Integer, Counter> counterMap = sectorMap.get(requestModel.getSectorName()).getCounterMap();
         List<Counter> availableCounters = getAvailableCounters(requestModel.getCountVal(), counterMap);
 
-        if (availableCounters.isEmpty()) {
+        if (availableCounters.isEmpty() || availableCounters.size()!=requestModel.getCountVal()) {
+            ConcurrentLinkedQueue<PendingAssignment> pendingAssignments = sectorMap.get(requestModel.getSectorName()).getPendingAssignments();
             CounterRangeAssignmentResponseModel responseModel = new CounterRangeAssignmentResponseModel(
                     0,0,requestModel.getCountVal(),
-                    sectorMap.get(requestModel.getSectorName()).getPendingFlightMap().get(requestModel.getAirlineName()).size());
+                    pendingAssignments.size());
             for (Flight flight : flightQueue) {
                 flight.getPending().set(true);
-                flight.setSectorName(requestModel.getSectorName());
-                sectorMap.get(requestModel.getSectorName()).getPendingFlightMap().get(requestModel.getAirlineName()).add(flight);
             }
+            pendingAssignments.add(new PendingAssignment(flightQueue, requestModel.getCountVal()));
             return responseModel;
         } else {
             CounterRange counterRange = new CounterRange(availableCounters, airlines.get(requestModel.getAirlineName()), flightQueue);
@@ -189,11 +186,7 @@ public class AirportRepository {
                 if (flight.getPending().get())
                     flight.getPending().set(false);
                 flight.getCheckingIn().set(true);
-                flight.setSectorName(requestModel.getSectorName());
             }
-            // TODO: See if this is really needed
-            // availableCounters.getFirst().getIsFirstInRange().set(true);
-            // availableCounters.getFirst().getLastInRange().set(availableCounters.getLast().getNum());
             return new CounterRangeAssignmentResponseModel(requestModel.getCountVal(), counterRange.getLastCounter().getNum()
                     , 0,0);
         }
@@ -250,16 +243,15 @@ public class AirportRepository {
 
         if (!counter.getAirline().getName().equals(requestModel.getAirline()))
             throw new CounterIsCheckingInOtherAirlineException();
-        // TODO: This condition does not appear in tp as a fail
         if (!counter.getIsFirstInRange().get())
             throw new CounterIsNotFirstInRangeException();
         if (counter.getCounterRange().hasBookings())
             throw new StillCheckingInBookingsException();
 
-        FreeCounterRangeResponseModel responseModel = new FreeCounterRangeResponseModel();
-        counterRange.free();
+        FreeCounterRangeResponseModel responseModel = counterRange.free();
 
-        // sector.resolvePending(responseModel.getFreedAmount().get(), requestModel.getFromVal());
+
+        sector.resolvePending(responseModel.getFreedAmount().get(), requestModel.getFromVal());
         return responseModel;
     }
 

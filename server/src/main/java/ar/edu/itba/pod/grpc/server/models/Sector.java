@@ -1,5 +1,7 @@
 package ar.edu.itba.pod.grpc.server.models;
 
+import org.checkerframework.checker.units.qual.C;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -10,19 +12,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Sector {
     private final String name;
     private final Map<Integer, Counter> counterMap;
-    private final Map<String, ConcurrentLinkedQueue<Flight>> pendingFlightMap;
+    private final ConcurrentLinkedQueue<PendingAssignment> pendingAssignments;
     public Sector(String name) {
         this.name = name;
         this.counterMap = new ConcurrentSkipListMap<>();
-        this.pendingFlightMap = new ConcurrentSkipListMap<>();
+        this.pendingAssignments = new ConcurrentLinkedQueue<>();
     }
 
     public String getName() {
         return name;
     }
 
-    public Map<String, ConcurrentLinkedQueue<Flight>> getPendingFlightMap() {
-        return pendingFlightMap;
+    public ConcurrentLinkedQueue<PendingAssignment> getPendingAssignments() {
+        return pendingAssignments;
     }
 
     public void addCounters(int lastCounterAdded, int counterAmount) {
@@ -35,21 +37,24 @@ public class Sector {
         return counterMap;
     }
 
-    public void resolvePending(int counterAmount, int firstCounter) {
-        for (Map.Entry<String, ConcurrentLinkedQueue<Flight>> entry : pendingFlightMap.entrySet()) {
-            ConcurrentLinkedQueue<Flight> queue = entry.getValue();
-            if (!queue.isEmpty()) {
-                for (int i = 0; i < counterAmount; i++) {
-                    Counter counter = counterMap.get(firstCounter + i);
-                    if (i == 0)
-                        counter.getIsFirstInRange().set(true);
-                    counter.getIsFirstInRange().set(false);
-                    counter.getLastInRange().set(firstCounter - 1 + counterAmount);
-                    counter.getCounterRange().getFlights().addAll(queue);
-                }
-                queue.clear();
-                break;
+    public synchronized void resolvePending(int counterAmount, int firstCounter) {
+        if (!pendingAssignments.isEmpty()) {
+            PendingAssignment front = pendingAssignments.peek();
+            PendingAssignment pendingAssignment;
+            while (front != null && front.getCountVal().get() <= counterAmount) {
+                pendingAssignment = pendingAssignments.poll();
+                List<Counter> counters = new ArrayList<>();
+                counterAmount -= getCountersFromVal(counters, firstCounter, pendingAssignment.getCountVal().get());
+                CounterRange counterRange = new CounterRange(counters,pendingAssignment.getFlights().peek().getAirline(), pendingAssignment.getFlights());
+                front = pendingAssignments.peek();
             }
         }
+    }
+
+    private int getCountersFromVal(List<Counter> counters, int firstCounter, int countVal) {
+        for (int i = firstCounter; i <= firstCounter + countVal -1; i++) {
+            counters.add(counterMap.get(i));
+        }
+        return counters.size();
     }
 }

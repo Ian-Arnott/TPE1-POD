@@ -1,5 +1,7 @@
 package ar.edu.itba.pod.grpc.server.models;
 
+import ar.edu.itba.pod.grpc.server.models.response.FreeCounterRangeResponseModel;
+
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -41,14 +43,18 @@ public class CounterRange {
         return !bookingQueue.isEmpty();
     }
 
-    public void free() {
+    public FreeCounterRangeResponseModel free() {
+        FreeCounterRangeResponseModel freeCounterRangeResponseModel = new FreeCounterRangeResponseModel();
+        freeCounterRangeResponseModel.getFreedAmount().set(counters.size());
         for (Counter counter : counters) {
             counter.setCounterRange(null);
         }
         for (Flight flight : flights) {
-            flight.setCheckedIn(new AtomicBoolean(true));
-            flight.setCheckingIn(new AtomicBoolean(false));
+            flight.getCheckingIn().set(false);
+            flight.getCheckedIn().set(true);
+            freeCounterRangeResponseModel.getFlights().add(flight.getCode());
         }
+        return freeCounterRangeResponseModel;
     }
 
     public Booking performCheckIn() {
