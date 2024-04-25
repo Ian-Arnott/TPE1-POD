@@ -79,7 +79,7 @@ public class AirportRepository {
             lastCounterAdded += counterAmount;
         }
 
-        sector.resolvePending(lastCounterAdded + 1 - counterAmount);
+        sector.resolvePending();
         return lastCounterAdded;
     }
 
@@ -237,7 +237,7 @@ public class AirportRepository {
         FreeCounterRangeResponseModel responseModel = counterRange.free();
 
 
-        sector.resolvePending(requestModel.getFromVal());
+        sector.resolvePending();
         return responseModel;
     }
 

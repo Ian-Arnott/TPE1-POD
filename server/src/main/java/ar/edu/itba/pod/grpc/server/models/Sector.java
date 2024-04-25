@@ -34,7 +34,7 @@ public class Sector {
         return counterMap;
     }
 
-    public synchronized void resolvePending(int firstCounter) {
+    public synchronized void resolvePending() {
         if (!pendingAssignments.isEmpty()) {
             PendingAssignment front = pendingAssignments.peek();
             PendingAssignment pendingAssignment;
@@ -48,6 +48,11 @@ public class Sector {
                     break;
                 }
                 CounterRange counterRange = new CounterRange(counters,pendingAssignment.getFlights().peek().getAirline(), pendingAssignment.getFlights());
+                for (Flight flight : pendingAssignment.getFlights()) {
+                    if (flight.getPending().get())
+                        flight.getPending().set(false);
+                    flight.getCheckingIn().set(true);
+                }
                 front = pendingAssignments.peek();
             }
         }
