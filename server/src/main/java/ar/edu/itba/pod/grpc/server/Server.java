@@ -4,6 +4,7 @@ import ar.edu.itba.pod.grpc.server.exeptions.GlobalExceptionHandlerInterceptor;
 import ar.edu.itba.pod.grpc.server.services.AdminAirportService;
 import ar.edu.itba.pod.grpc.server.services.CheckInService;
 import ar.edu.itba.pod.grpc.server.services.CounterAssignmentService;
+import ar.edu.itba.pod.grpc.server.services.NotifyService;
 import io.grpc.BindableService;
 import io.grpc.ServerBuilder;
 import io.grpc.ServerInterceptors;
@@ -27,6 +28,7 @@ public class Server {
                 .addService(handler.apply(new AdminAirportService()))
                 .addService(handler.apply(new CounterAssignmentService()))
                 .addService(handler.apply(new CheckInService()))
+                .addService(handler.apply(new NotifyService()))
                 .build();
         server.start();
         logger.info("Server started, listening on " + port);

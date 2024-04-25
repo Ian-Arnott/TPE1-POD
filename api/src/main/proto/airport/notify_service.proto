@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
+import "airport/models.proto";
+package airport;
+
+service NotifyService {
+  rpc notifyAirline(NotifyRequest) returns(stream Notification);
+  rpc notifyRemoveAirline(NotifyRequest) returns(NotificationResponse);
+}
+
+message NotifyRequest {
+  string airlineName = 1;
+}
+
+message Notification {
+  string message = 1;
+}
+
+message NotificationResponse {
+  SimpleStatusResponse response = 1;
+}

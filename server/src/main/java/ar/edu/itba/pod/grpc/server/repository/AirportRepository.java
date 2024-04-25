@@ -1,5 +1,6 @@
 package ar.edu.itba.pod.grpc.server.repository;
 
+import airport.NotifyServiceOuterClass;
 import ar.edu.itba.pod.grpc.server.exeptions.SectorMapIsEmptyException;
 import airport.CounterAssignmentServiceOuterClass;
 import ar.edu.itba.pod.grpc.server.exeptions.NonPositiveCounterException;
@@ -302,5 +303,20 @@ public class AirportRepository {
                 booking.getFlight().getCode(),
                 booking.getFlight().getAirline().getName()
         );
+    }
+
+    public void registerForNotifications(String airlineName, StreamObserver<NotifyServiceOuterClass.Notification> responseObserver) {
+        Airline airline = airlines.get(airlineName);
+        if (airline == null)
+            throw new AirlineDoesNotExistException(airlineName);
+        airline.registerForNotifications(responseObserver);
+        airline.notifyRegistered();
+    }
+
+    public StreamObserver<NotifyServiceOuterClass.Notification> unregisterForNotification(String airlineName) {
+        Airline airline = airlines.get(airlineName);
+        if (airline == null)
+            throw new AirlineDoesNotExistException(airlineName);
+        return airline.unregisterForNotifications();
     }
 }
