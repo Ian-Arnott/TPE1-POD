@@ -45,7 +45,7 @@ public class Sector {
                         counter.getIsFirstInRange().set(true);
                     counter.getIsFirstInRange().set(false);
                     counter.getLastInRange().set(firstCounter - 1 + counterAmount);
-                    counter.getFlights().addAll(queue);
+                    counter.getCounterRange().getFlights().addAll(queue);
                 }
                 queue.clear();
                 break;

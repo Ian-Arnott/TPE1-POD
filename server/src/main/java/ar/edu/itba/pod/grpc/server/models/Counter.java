@@ -1,65 +1,79 @@
 package ar.edu.itba.pod.grpc.server.models;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Counter {
     private final int num;
-    private Airline airline;
-    private ConcurrentLinkedQueue<Flight> flights;
-    private final ConcurrentLinkedQueue<Booking> bookingQueue;
+    private CounterRange counterRange;
     private final AtomicBoolean isCheckingIn;
     private final AtomicBoolean isFirstInRange;
     private final AtomicInteger lastInRange;
 
     public Counter(int num) {
         this.num = num;
-        flights = null;
-        airline = null;
         isCheckingIn = new AtomicBoolean(false);
         isFirstInRange = new AtomicBoolean(false);
         lastInRange = new AtomicInteger(0);
-        this.bookingQueue = new ConcurrentLinkedQueue<>();
+        counterRange = null;
     }
 
     public AtomicBoolean getIsFirstInRange() {
-        return isFirstInRange;
+        if (counterRange == null) {
+            return new AtomicBoolean(false);
+        }
+        return new AtomicBoolean(counterRange.getFirstCounter().equals(this));
     }
 
     public AtomicInteger getLastInRange() {
-        return lastInRange;
+        if (counterRange == null) {
+            return new AtomicInteger(0);
+        }
+        return new AtomicInteger(counterRange.getLastCounter().getNum());
     }
 
-    public void setAirline(Airline airline) {
-        this.airline = airline;
-    }
-
-    public void setFlights(ConcurrentLinkedQueue<Flight> flights) {
-        this.flights = flights;
-    }
 
     public AtomicBoolean getIsCheckingIn() {
-        return isCheckingIn;
-    }
-
-    public ConcurrentLinkedQueue<Flight> getFlights() {
-        return flights;
-    }
-
-    public Airline getAirline() {
-        return airline;
-    }
-
-    public ConcurrentLinkedQueue<Booking> getBookingQueue() {
-        return bookingQueue;
-    }
-
-    public synchronized boolean bookingQueueEmpty() {
-        return bookingQueue.isEmpty();
+        return new AtomicBoolean(counterRange != null);
     }
 
     public int getNum() {
         return num;
     }
+
+    public CounterRange getCounterRange() {
+        return counterRange;
+    }
+
+    public void setCounterRange(CounterRange counterRange) {
+        this.counterRange = counterRange;
+    }
+     public Booking performCheckIn() {
+        return counterRange.performCheckIn();
+     }
+
+     public int addBookingToQueue(Booking booking) {
+        return counterRange.addBookingToQueue(booking);
+     }
+
+     public Airline getAirline(){
+        if (counterRange == null) {
+            return null;
+        }
+        return counterRange.getAirline();
+     }
+     public ConcurrentLinkedQueue<Flight> getFlights() {
+         if (counterRange == null) {
+             return new ConcurrentLinkedQueue<>();
+         }
+         return counterRange.getFlights();
+     }
+    public int getQueueLength(){
+        if (counterRange == null) {
+            return 0;
+        }
+        return counterRange.getQueueLength();
+     }
 }

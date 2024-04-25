@@ -2,6 +2,7 @@ package ar.edu.itba.pod.grpc.server.services;
 
 import airport.CounterAssignmentServiceGrpc;
 import airport.CounterAssignmentServiceOuterClass.*;
+import ar.edu.itba.pod.grpc.server.models.Airline;
 import ar.edu.itba.pod.grpc.server.models.Counter;
 import ar.edu.itba.pod.grpc.server.models.Flight;
 import airport.CounterAssignmentServiceOuterClass;
@@ -19,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -51,15 +51,15 @@ public class CounterAssignmentService extends CounterAssignmentServiceGrpc.Count
         List<Counter> counters = repository.getCounters(request.getSectorName(), request.getFromVal(), request.getToVal());
         ListCountersResponse.Builder listCountersResonseBuilder = ListCountersResponse.newBuilder();
         for (Counter counter : counters) {
-
             ListCounterItem.Builder listCounterItem = ListCounterItem.newBuilder().setCounterNum(counter.getNum());
-            if (counter.getAirline() != null) {
-                listCounterItem.setAirlineName(counter.getAirline().getName())
+            Airline airline = counter.getAirline();
+            if (airline != null) {
+                listCounterItem.setAirlineName(airline.getName())
                         .addAllFlightCodes(counter.getFlights().stream().map(Flight::getCode).collect(Collectors.toList()))
-                        .setPeople(counter.getBookingQueue().size());
+                        .setPeople(counter.getQueueLength());
             }
             listCountersResonseBuilder.addItems(
-                    listCounterItem
+                    listCounterItem.build()
             );
         }
         responseObserver.onNext(listCountersResonseBuilder.build());
@@ -80,7 +80,7 @@ public class CounterAssignmentService extends CounterAssignmentServiceGrpc.Count
     }
 
     @Override
-    public void freeCounterRange(CounterAssignmentServiceOuterClass.FreeCounterRangeRequest request, StreamObserver<CounterAssignmentServiceOuterClass.FreeCounterRangeResponse> responseObserver) {
+    public void freeCounterRange(CounterAssignmentServiceOuterClass.FreeCounterRangeRequest request, StreamObserver<FreeCounterRangeResponse> responseObserver) {
         FreeCounterRangeRequestModel requestModel = FreeCounterRangeRequestModel.fromFreeCounterRequest(request);
 
         FreeCounterRangeResponseModel responseModel = repository.freeCounterRange(requestModel);

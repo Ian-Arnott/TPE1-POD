@@ -69,7 +69,7 @@ public class ListCountersResponseFutureCallback extends AbstractFutureCallback<C
                 String airlineName = firstItem.getAirlineName();
 
                 if (airlineName.isEmpty()) {
-                    stringBuilder.append("-").append("\t").append("-").append("\t").append("-").append("\t");
+                    stringBuilder.append("-").append("\t").append("-").append("\t").append("-").append("\n");
                 } else {
                     stringBuilder.append(firstItem.getAirlineName()).append("\t");
                     int flight_i = 0;

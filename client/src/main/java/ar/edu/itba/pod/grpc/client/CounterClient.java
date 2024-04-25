@@ -112,7 +112,7 @@ public class CounterClient {
                 Futures.addCallback(listenableFuture, new CounterRangeAssignmentResponseFutureCallback(logger,latch, sectorName, airline, flights), Runnable::run);
             }
             case "freeCounters" -> {
-                String fromVal = argMap.get(ClientArgs.COUNTER_FROM.getValue());    
+                String fromVal = argMap.get(ClientArgs.COUNTER_FROM.getValue());
                 String sectorName = argMap.get(ClientArgs.SECTOR.getValue());
                 String airline = argMap.get(ClientArgs.AIRLINE.getValue());
 

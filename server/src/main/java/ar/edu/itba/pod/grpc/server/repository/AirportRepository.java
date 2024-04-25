@@ -171,7 +171,7 @@ public class AirportRepository {
         });
 
         Map<Integer, Counter> counterMap = sectorMap.get(requestModel.getSectorName()).getCounterMap();
-        List<Integer> availableCounters = getAvailableCounters(requestModel, counterMap);
+        List<Counter> availableCounters = getAvailableCounters(requestModel.getCountVal(), counterMap);
 
         if (availableCounters.isEmpty()) {
             CounterRangeAssignmentResponseModel responseModel = new CounterRangeAssignmentResponseModel(
@@ -184,20 +184,17 @@ public class AirportRepository {
             }
             return responseModel;
         } else {
-            for (int available : availableCounters) {
-                counterMap.get(available).getIsCheckingIn().set(true);
-                counterMap.get(available).setAirline(airlines.get(requestModel.getAirlineName()));
-                counterMap.get(available).setFlights(flightQueue);
-            }
+            CounterRange counterRange = new CounterRange(availableCounters, airlines.get(requestModel.getAirlineName()), flightQueue);
             for (Flight flight : flightQueue) {
                 if (flight.getPending().get())
                     flight.getPending().set(false);
                 flight.getCheckingIn().set(true);
                 flight.setSectorName(requestModel.getSectorName());
             }
-            counterMap.get(availableCounters.getFirst()).getIsFirstInRange().set(true);
-            counterMap.get(availableCounters.getFirst()).getLastInRange().set(availableCounters.getLast());
-            return new CounterRangeAssignmentResponseModel(requestModel.getCountVal(), availableCounters.getLast()
+            // TODO: See if this is really needed
+            // availableCounters.getFirst().getIsFirstInRange().set(true);
+            // availableCounters.getFirst().getLastInRange().set(availableCounters.getLast().getNum());
+            return new CounterRangeAssignmentResponseModel(requestModel.getCountVal(), counterRange.getLastCounter().getNum()
                     , 0,0);
         }
     }
@@ -212,7 +209,6 @@ public class AirportRepository {
             throw new SectorDoesNotExistsException(sectorName);
         }
 
-
         Map<Integer, Counter> counterMap = sector.getCounterMap();
         List<Counter> counters = new ArrayList<>();
         for (int i = from, j = 0; i <= to && j < counterMap.values().size(); i++, j++) {
@@ -224,16 +220,15 @@ public class AirportRepository {
         return counters;
     }
 
-    private static List<Integer> getAvailableCounters(CounterRangeAssignmentRequestModel requestModel, Map<Integer, Counter> counterMap) {
-        List<Integer> availableCounters = new ArrayList<>();
+    private static List<Counter> getAvailableCounters(int countVal, Map<Integer, Counter> counterMap) {
+        List<Counter> availableCounters = new ArrayList<>();
         for (Map.Entry<Integer, Counter> entry : counterMap.entrySet()) {
             if (!entry.getValue().getIsCheckingIn().get()) {
-                System.out.println(entry);
-                availableCounters.add(entry.getKey());
+                availableCounters.add(entry.getValue());
             } else {
                 availableCounters.clear();
             }
-            if (availableCounters.size() == requestModel.getCountVal()) {
+            if (availableCounters.size() == countVal) {
                 break;
             }
         }
@@ -244,62 +239,59 @@ public class AirportRepository {
         if (!sectorMap.containsKey(requestModel.getSectorName()))
             throw new SectorDoesNotExistsException(requestModel.getSectorName());
         Sector sector = sectorMap.get(requestModel.getSectorName());
-        if (!sector.getCounterMap().containsKey(requestModel.getFromVal()))
+
+        Counter counter = sector.getCounterMap().get(requestModel.getFromVal());
+
+        if (counter == null)
             throw new CountersAreNotAssignedException();
-        if (!sector.getCounterMap().get(requestModel.getFromVal()).getIsCheckingIn().get())
+        if (!counter.getIsCheckingIn().get())
             throw new CountersAreNotAssignedException();
-        if (!sector.getCounterMap().get(requestModel.getFromVal()).getAirline().getName().equals(requestModel.getAirline()))
+        CounterRange counterRange = counter.getCounterRange();
+
+        if (!counter.getAirline().getName().equals(requestModel.getAirline()))
             throw new CounterIsCheckingInOtherAirlineException();
-        if (!sector.getCounterMap().get(requestModel.getFromVal()).getIsFirstInRange().get())
+        // TODO: This condition does not appear in tp as a fail
+        if (!counter.getIsFirstInRange().get())
             throw new CounterIsNotFirstInRangeException();
+        if (counter.getCounterRange().hasBookings())
+            throw new StillCheckingInBookingsException();
 
         FreeCounterRangeResponseModel responseModel = new FreeCounterRangeResponseModel();
-        int lastInRange = sector.getCounterMap().get(requestModel.getFromVal()).getLastInRange().get();
-        for (int i = requestModel.getFromVal(); i <= lastInRange; i++) {
-            Counter counter = sector.getCounterMap().get(i);
-            if (!counter.bookingQueueEmpty())
-                throw new StillCheckingInBookingsException();
-            counter.getFlights().forEach(flight -> {
-                flight.getCheckingIn().set(false);
-                flight.getCheckedIn().set(true);
-                responseModel.getFlights().add(flight.getCode());
-            });
-            counter.getIsCheckingIn().set(false);
-            counter.getIsFirstInRange().set(false);
-            counter.getLastInRange().set(0);
-            responseModel.getFreedAmount().incrementAndGet();
-        }
-        sector.resolvePending(responseModel.getFreedAmount().get(), requestModel.getFromVal());
+        counterRange.free();
+
+        // sector.resolvePending(responseModel.getFreedAmount().get(), requestModel.getFromVal());
         return responseModel;
     }
 
     public synchronized void performCounterCheckIn(PerformCounterCheckInRequestModel requestModel, StreamObserver<CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse> responseObserver) {
+        Sector sector = sectorMap.get(requestModel.getSectorName());
         if (!sectorMap.containsKey(requestModel.getSectorName()))
             throw new SectorDoesNotExistsException(requestModel.getSectorName());
-        Map<Integer,Counter> counterMap = sectorMap.get(requestModel.getSectorName()).getCounterMap();
-        if (!counterMap.containsKey(requestModel.getFromVal().get()))
+        Counter counter = sector.getCounterMap().get(requestModel.getFromVal().get());
+
+        if (counter == null)
             throw new CountersAreNotAssignedException();
-        Counter counter = counterMap.get(requestModel.getFromVal().get());
         if (!counter.getIsCheckingIn().get())
             throw new CountersAreNotAssignedException();
-        if (!counter.getAirline().getName().equals(requestModel.getAirlineName()))
+        if (!counter.getCounterRange().getAirline().getName().equals(requestModel.getAirlineName()))
             throw new CounterIsCheckingInOtherAirlineException();
         if (!counter.getIsFirstInRange().get())
             throw new CounterIsNotFirstInRangeException();
+
+        CounterRange counterRange = counter.getCounterRange();
+
         for (int i = requestModel.getFromVal().get(); i <= counter.getLastInRange().get(); i++) {
-            Counter auxCounter = counterMap.get(i);
-            Booking booking;
-            if (!auxCounter.bookingQueueEmpty()) {
-                booking = auxCounter.getBookingQueue().poll();
+            Booking booking = counterRange.performCheckIn();
+            if (booking == null) {
+                responseObserver.onNext(CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse.newBuilder()
+                        .setSuccessful(false).setCounter(i).build());
+            } else {
                 booking.getCheckedIn().set(true);
                 responseObserver.onNext(CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse.newBuilder()
                         .setCounter(i)
                         .setBooking(booking.getCode()).setFlight(booking.getFlight().getCode())
                         .setSuccessful(true)
                         .build());
-            } else {
-                responseObserver.onNext(CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse.newBuilder()
-                        .setSuccessful(false).setCounter(i).build());
             }
             if (i == counter.getLastInRange().get()) {
                 responseObserver.onCompleted();
@@ -309,29 +301,29 @@ public class AirportRepository {
     }
 
     public synchronized PassengerCheckInResponseModel passengerCheckIn(PassengerCheckInRequestModel requestModel) {
-        if (!bookingConcurrentMap.containsKey(requestModel.getBooking()))
-            throw new BookingDoesNotExistException(requestModel.getBooking());
         Booking booking = bookingConcurrentMap.get(requestModel.getBooking());
+        if (booking == null)
+            throw new BookingDoesNotExistException(requestModel.getBooking());
         if (booking.getCheckedIn().get())
             throw new BookingAlreadyCheckedInException(booking.getCode());
         if (!sectorMap.containsKey(requestModel.getSectorName()))
             throw new SectorDoesNotExistsException(requestModel.getSectorName());
-        Map<Integer, Counter> counterMap = sectorMap.get(requestModel.getSectorName()).getCounterMap();
-        if (!counterMap.containsKey(requestModel.getFirstCounter().get()))
+        Counter counter = sectorMap.get(requestModel.getSectorName()).getCounterMap().get(requestModel.getFirstCounter().get());
+        if (counter == null)
             throw new CountersAreNotAssignedException();
-        if (!counterMap.get(requestModel.getFirstCounter().get()).getIsFirstInRange().get())
+        if (!counter.getIsFirstInRange().get())
             throw new CounterIsNotFirstInRangeException();
-        int lastCounter = counterMap.get(requestModel.getFirstCounter().get()).getLastInRange().get();
-        Random random = new Random();
-        int counter = random.nextInt(lastCounter - requestModel.getFirstCounter().get() + 1) + requestModel.getFirstCounter().get();
-        AtomicInteger peopleInLine =  new AtomicInteger();
-        for (int i = requestModel.getFirstCounter().get(); i <= lastCounter; i++) {
-            ConcurrentLinkedQueue<Booking> bookingQueue = counterMap.get(i).getBookingQueue();
-            if (bookingQueue.contains(booking))
-                throw new BookingAlreadyInLineException(booking.getCode());
-            peopleInLine.addAndGet(bookingQueue.size());
-        }
-        counterMap.get(counter).getBookingQueue().add(booking);
-        return new PassengerCheckInResponseModel(new AtomicInteger(lastCounter),peopleInLine,booking.getFlight().getCode(),booking.getFlight().getAirline().getName());
+        if (booking.getInQueue().get())
+            throw new BookingAlreadyInLineException(booking.getCode());
+
+
+        int peopleInLine = counter.addBookingToQueue(booking);
+
+        return new PassengerCheckInResponseModel(
+                counter.getLastInRange(),
+                new AtomicInteger(peopleInLine),
+                booking.getFlight().getCode(),
+                booking.getFlight().getAirline().getName()
+        );
     }
 }
