@@ -1,13 +1,10 @@
 package ar.edu.itba.pod.grpc.server.models;
 
-import org.checkerframework.checker.units.qual.C;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class Sector {
     private final String name;
@@ -37,24 +34,37 @@ public class Sector {
         return counterMap;
     }
 
-    public synchronized void resolvePending(int counterAmount, int firstCounter) {
+    public synchronized void resolvePending(int firstCounter) {
         if (!pendingAssignments.isEmpty()) {
             PendingAssignment front = pendingAssignments.peek();
             PendingAssignment pendingAssignment;
-            while (front != null && front.getCountVal().get() <= counterAmount) {
+            List<Counter> counters = null;
+
+            while (front != null) {
                 pendingAssignment = pendingAssignments.poll();
-                List<Counter> counters = new ArrayList<>();
-                counterAmount -= getCountersFromVal(counters, firstCounter, pendingAssignment.getCountVal().get());
+                int countVal = pendingAssignment.getCountVal().get();
+                counters = getAvailableCounters(countVal, this.counterMap);
+                if (counters == null || counters.size() < countVal) {
+                    break;
+                }
                 CounterRange counterRange = new CounterRange(counters,pendingAssignment.getFlights().peek().getAirline(), pendingAssignment.getFlights());
                 front = pendingAssignments.peek();
             }
         }
     }
 
-    private int getCountersFromVal(List<Counter> counters, int firstCounter, int countVal) {
-        for (int i = firstCounter; i <= firstCounter + countVal -1; i++) {
-            counters.add(counterMap.get(i));
+    public List<Counter> getAvailableCounters(int countVal, Map<Integer, Counter> counterMap) {
+        List<Counter> availableCounters = new ArrayList<>();
+        for (Map.Entry<Integer, Counter> entry : counterMap.entrySet()) {
+            if (!entry.getValue().getIsCheckingIn().get()) {
+                availableCounters.add(entry.getValue());
+            } else {
+                availableCounters.clear();
+            }
+            if (availableCounters.size() == countVal) {
+                break;
+            }
         }
-        return counters.size();
+        return availableCounters;
     }
 }

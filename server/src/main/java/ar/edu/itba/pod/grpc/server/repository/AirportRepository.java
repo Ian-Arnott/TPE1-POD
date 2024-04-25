@@ -79,7 +79,7 @@ public class AirportRepository {
             lastCounterAdded += counterAmount;
         }
 
-        sector.resolvePending(counterAmount, lastCounterAdded + 1 - counterAmount);
+        sector.resolvePending(lastCounterAdded + 1 - counterAmount);
         return lastCounterAdded;
     }
 
@@ -167,11 +167,12 @@ public class AirportRepository {
             numberOfPassengers.updateAndGet(v -> v + flight.getBookings().size());
         });
 
-        Map<Integer, Counter> counterMap = sectorMap.get(requestModel.getSectorName()).getCounterMap();
-        List<Counter> availableCounters = getAvailableCounters(requestModel.getCountVal(), counterMap);
+        Sector sector = sectorMap.get(requestModel.getSectorName());
+        Map<Integer, Counter> counterMap = sector.getCounterMap();
+        List<Counter> availableCounters = sector.getAvailableCounters(requestModel.getCountVal(), counterMap);
 
         if (availableCounters.isEmpty() || availableCounters.size()!=requestModel.getCountVal()) {
-            ConcurrentLinkedQueue<PendingAssignment> pendingAssignments = sectorMap.get(requestModel.getSectorName()).getPendingAssignments();
+            ConcurrentLinkedQueue<PendingAssignment> pendingAssignments = sector.getPendingAssignments();
             CounterRangeAssignmentResponseModel responseModel = new CounterRangeAssignmentResponseModel(
                     0,0,requestModel.getCountVal(),
                     pendingAssignments.size());
@@ -213,21 +214,6 @@ public class AirportRepository {
         return counters;
     }
 
-    private static List<Counter> getAvailableCounters(int countVal, Map<Integer, Counter> counterMap) {
-        List<Counter> availableCounters = new ArrayList<>();
-        for (Map.Entry<Integer, Counter> entry : counterMap.entrySet()) {
-            if (!entry.getValue().getIsCheckingIn().get()) {
-                availableCounters.add(entry.getValue());
-            } else {
-                availableCounters.clear();
-            }
-            if (availableCounters.size() == countVal) {
-                break;
-            }
-        }
-        return availableCounters;
-    }
-
     public FreeCounterRangeResponseModel freeCounterRange(FreeCounterRangeRequestModel requestModel) {
         if (!sectorMap.containsKey(requestModel.getSectorName()))
             throw new SectorDoesNotExistsException(requestModel.getSectorName());
@@ -251,7 +237,7 @@ public class AirportRepository {
         FreeCounterRangeResponseModel responseModel = counterRange.free();
 
 
-        sector.resolvePending(responseModel.getFreedAmount().get(), requestModel.getFromVal());
+        sector.resolvePending(requestModel.getFromVal());
         return responseModel;
     }
 
@@ -307,7 +293,6 @@ public class AirportRepository {
             throw new CounterIsNotFirstInRangeException();
         if (booking.getInQueue().get())
             throw new BookingAlreadyInLineException(booking.getCode());
-
 
         int peopleInLine = counter.addBookingToQueue(booking);
 
