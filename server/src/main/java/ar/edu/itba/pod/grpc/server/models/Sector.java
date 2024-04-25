@@ -41,12 +41,12 @@ public class Sector {
             List<Counter> counters = null;
 
             while (front != null) {
-                pendingAssignment = pendingAssignments.poll();
-                int countVal = pendingAssignment.getCountVal().get();
+                int countVal = front.getCountVal().get();
                 counters = getAvailableCounters(countVal, this.counterMap);
                 if (counters == null || counters.size() < countVal) {
                     break;
                 }
+                pendingAssignment = pendingAssignments.poll();
                 CounterRange counterRange = new CounterRange(counters,pendingAssignment.getFlights().peek().getAirline(), pendingAssignment.getFlights());
                 for (Flight flight : pendingAssignment.getFlights()) {
                     if (flight.getPending().get())
