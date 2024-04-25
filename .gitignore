@@ -20,5 +20,3 @@ tmp/
 
 ### Santiago ###
 .*.swp
-test.sh
-manifest_generate.sh
