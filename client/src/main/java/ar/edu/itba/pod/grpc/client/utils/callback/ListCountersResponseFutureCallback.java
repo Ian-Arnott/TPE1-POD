@@ -31,7 +31,7 @@ public class ListCountersResponseFutureCallback extends AbstractFutureCallback<C
             CounterAssignmentServiceOuterClass.ListCounterItem item,
             List<CounterAssignmentServiceOuterClass.ListCounterItem> currentBlock
     ) {
-        if (item == null) return true;
+        if (item == null) return false;
         if (currentBlock.isEmpty()) return true;
 
         CounterAssignmentServiceOuterClass.ListCounterItem firstItem = currentBlock.getFirst();
@@ -47,23 +47,27 @@ public class ListCountersResponseFutureCallback extends AbstractFutureCallback<C
         stringBuilder.append("##################################\n");
         Iterator<CounterAssignmentServiceOuterClass.ListCounterItem> itemIterator = items.iterator();
 
-        CounterAssignmentServiceOuterClass.ListCounterItem currentItem = null;
+        CounterAssignmentServiceOuterClass.ListCounterItem currentItem = itemIterator.next();
         List<CounterAssignmentServiceOuterClass.ListCounterItem> currentBlock = new ArrayList<>();
 
-        int currentVal = counterFrom;
         while (itemIterator.hasNext()) {
-            while (itemIterator.hasNext() && shouldAddToCurrentBlock(currentItem, currentBlock)) {
-                currentItem = itemIterator.next();
-                currentVal++;
+            while (shouldAddToCurrentBlock(currentItem, currentBlock)) {
                 currentBlock.add(currentItem);
+                if (itemIterator.hasNext()) {
+                    currentItem = itemIterator.next();
+                } else {
+                    currentItem = null;
+                }
             }
             // print line
             if (!currentBlock.isEmpty()) {
                 CounterAssignmentServiceOuterClass.ListCounterItem firstItem = currentBlock.getFirst();
+                CounterAssignmentServiceOuterClass.ListCounterItem lastItem = currentBlock.getLast();
+
                 stringBuilder.append("(")
                         .append(firstItem.getCounterNum())
                         .append("-")
-                        .append(currentVal - 1)
+                        .append(lastItem.getCounterNum())
                         .append(")\t");
 
                 String airlineName = firstItem.getAirlineName();
