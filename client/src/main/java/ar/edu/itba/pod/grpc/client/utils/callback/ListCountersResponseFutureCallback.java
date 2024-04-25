@@ -31,7 +31,7 @@ public class ListCountersResponseFutureCallback extends AbstractFutureCallback<C
             CounterAssignmentServiceOuterClass.ListCounterItem item,
             List<CounterAssignmentServiceOuterClass.ListCounterItem> currentBlock
     ) {
-        if (item == null) return false;
+        if (item == null) return true;
         if (currentBlock.isEmpty()) return true;
 
         CounterAssignmentServiceOuterClass.ListCounterItem firstItem = currentBlock.getFirst();
@@ -41,48 +41,52 @@ public class ListCountersResponseFutureCallback extends AbstractFutureCallback<C
 
     @Override
     public void onSuccess(CounterAssignmentServiceOuterClass.ListCountersResponse response) {
-         List<CounterAssignmentServiceOuterClass.ListCounterItem> items = response.getItemsList();
-         for (CounterAssignmentServiceOuterClass.ListCounterItem i : items)  {
-             System.out.println(i.getAirlineName());
-         }
-         StringBuilder stringBuilder = new StringBuilder();
-         stringBuilder.append("Counters\tAirline\tFlights\tPeople\n");
-         stringBuilder.append("##################################\n");
-         Iterator<CounterAssignmentServiceOuterClass.ListCounterItem> itemIterator = items.iterator();
+        List<CounterAssignmentServiceOuterClass.ListCounterItem> items = response.getItemsList();
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("Counters\tAirline\tFlights\tPeople\n");
+        stringBuilder.append("##################################\n");
+        Iterator<CounterAssignmentServiceOuterClass.ListCounterItem> itemIterator = items.iterator();
 
-        CounterAssignmentServiceOuterClass.ListCounterItem currentItem = itemIterator.next();
+        CounterAssignmentServiceOuterClass.ListCounterItem currentItem = null;
         List<CounterAssignmentServiceOuterClass.ListCounterItem> currentBlock = new ArrayList<>();
 
-         int currentVal = counterFrom;
-         while (currentVal < counterTo && currentItem != null) {
-             if (currentVal < counterTo - 1 && shouldAddToCurrentBlock(currentItem, currentBlock)) {
-                 currentBlock.add(currentItem);
-                 currentItem = itemIterator.next();
-                 currentVal++;
-             } else {
-                 // print line
-                 if (!currentBlock.isEmpty()) {
-                     CounterAssignmentServiceOuterClass.ListCounterItem firstItem = currentBlock.getFirst();
-                     stringBuilder.append("(").append(firstItem.getCounterNum()).append("-").append(currentVal).append(")\t").append(firstItem.getAirlineName()).append("\t");
+        int currentVal = counterFrom;
+        while (itemIterator.hasNext()) {
+            while (itemIterator.hasNext() && shouldAddToCurrentBlock(currentItem, currentBlock)) {
+                currentItem = itemIterator.next();
+                currentVal++;
+                currentBlock.add(currentItem);
+            }
+            // print line
+            if (!currentBlock.isEmpty()) {
+                CounterAssignmentServiceOuterClass.ListCounterItem firstItem = currentBlock.getFirst();
+                stringBuilder.append("(")
+                        .append(firstItem.getCounterNum())
+                        .append("-")
+                        .append(currentVal - 1)
+                        .append(")\t");
 
-                     int flight_i = 0;
-                     for (String f : firstItem.getFlightCodesList()) {
-                         if (flight_i != 0) {
-                             stringBuilder.append("|");
-                         }
-                         stringBuilder.append(f);
-                         flight_i++;
-                     }
-                     stringBuilder.append("\t").append(firstItem.getPeople()).append("\n");
-                     currentBlock.clear();
-                 }
-                 currentVal++;
-             }
-         }
-         // print last empty line if needed
+                String airlineName = firstItem.getAirlineName();
 
-
-        System.out.println(stringBuilder);
+                if (airlineName.isEmpty()) {
+                    stringBuilder.append("-").append("\t").append("-").append("\t").append("-").append("\t");
+                } else {
+                    stringBuilder.append(firstItem.getAirlineName()).append("\t");
+                    int flight_i = 0;
+                    for (String f : firstItem.getFlightCodesList()) {
+                        if (flight_i != 0) {
+                            stringBuilder.append("|");
+                        }
+                        stringBuilder.append(f);
+                        flight_i++;
+                    }
+                    stringBuilder.append("\t").append(firstItem.getPeople()).append("\n");
+                }
+                currentBlock.clear();
+            }
+        }
+        // print last empty line if needed
+        System.out.print(stringBuilder);
 
         getLatch().countDown();
     }

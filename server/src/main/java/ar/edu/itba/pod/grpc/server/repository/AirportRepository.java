@@ -204,10 +204,22 @@ public class AirportRepository {
 
     public List<Counter> getCounters(String sectorName, int from, int to){
         Sector sector = sectorMap.get(sectorName);
+        if (to - from < 0) {
+            throw new InvalidCounterRangeException(from, to);
+        }
+
+        if (sector == null) {
+            throw new SectorDoesNotExistsException(sectorName);
+        }
+
+
         Map<Integer, Counter> counterMap = sector.getCounterMap();
         List<Counter> counters = new ArrayList<>();
-        for (int i = from; i <= to ; i++) {
-            counters.add(counterMap.get(i));
+        for (int i = from, j = 0; i <= to && j < counterMap.values().size(); i++, j++) {
+            Counter counter = counterMap.get(i);
+            if (counter != null) {
+                counters.add(counter);
+            }
         }
         return counters;
     }

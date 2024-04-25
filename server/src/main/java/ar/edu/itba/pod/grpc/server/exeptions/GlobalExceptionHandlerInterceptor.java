@@ -49,7 +49,8 @@ public class GlobalExceptionHandlerInterceptor implements ServerInterceptor {
                 Map.entry(CounterIsCheckingInOtherAirlineException.class, Code.ABORTED),
                 Map.entry(CounterIsNotFirstInRangeException.class, Code.ABORTED),
                 Map.entry(CountersAreNotAssignedException.class, Code.ABORTED),
-                Map.entry(StillCheckingInBookingsException.class, Code.ABORTED)
+                Map.entry(StillCheckingInBookingsException.class, Code.ABORTED),
+                Map.entry(InvalidCounterRangeException.class, Code.INVALID_ARGUMENT)
         );
 
         private void handleException(RuntimeException exception, ServerCall<T, R> serverCall, Metadata headers) {

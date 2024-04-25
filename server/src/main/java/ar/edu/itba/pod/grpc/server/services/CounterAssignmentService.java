@@ -49,15 +49,17 @@ public class CounterAssignmentService extends CounterAssignmentServiceGrpc.Count
     @Override
     public void listCounters(ListCountersRequest request, StreamObserver<ListCountersResponse> responseObserver) {
         List<Counter> counters = repository.getCounters(request.getSectorName(), request.getFromVal(), request.getToVal());
-
         ListCountersResponse.Builder listCountersResonseBuilder = ListCountersResponse.newBuilder();
         for (Counter counter : counters) {
+
+            ListCounterItem.Builder listCounterItem = ListCounterItem.newBuilder().setCounterNum(counter.getNum());
+            if (counter.getAirline() != null) {
+                listCounterItem.setAirlineName(counter.getAirline().getName())
+                        .addAllFlightCodes(counter.getFlights().stream().map(Flight::getCode).collect(Collectors.toList()))
+                        .setPeople(counter.getBookingQueue().size());
+            }
             listCountersResonseBuilder.addItems(
-                    ListCounterItem.newBuilder()
-                            .setCounterNum(counter.getNum())
-                            .setAirlineName(counter.getAirline().getName())
-                            .addAllFlightCodes(counter.getFlights().stream().map(Flight::getCode).collect(Collectors.toList()))
-                            .setPeople(counter.getBookingQueue().size())
+                    listCounterItem
             );
         }
         responseObserver.onNext(listCountersResonseBuilder.build());

@@ -14,10 +14,10 @@ sh adminClient.sh -DserverAddress=127.0.0.0:50051 -Daction=addSector -Dsector=B
 sh adminClient.sh -DserverAddress=127.0.0.0:50051 -Daction=addSector -Dsector=C
 
 sh adminClient.sh -DserverAddress=127.0.0.0:50051 -Daction=addCounters -Dsector=A -Dcounters=1
-sh adminClient.sh -DserverAddress=127.0.0.0:50051 -Daction=addCounters -Dsector=C -Dcounters=3
+sh adminClient.sh -DserverAddress=127.0.0.0:50051 -Daction=addCounters -Dsector=C -Dcounters=10
 sh adminClient.sh -DserverAddress=127.0.0.0:50051 -Daction=addCounters -Dsector=B -Dcounters=3
+sh adminClient.sh -DserverAddress=127.0.0.0:50051 -Daction=addCounters -Dsector=C -Dcounters=10
 
-sh adminClient.sh -DserverAddress=127.0.0.0:50051 -Daction=manifest -DinPath=../../manifest.csv
 sh adminClient.sh -DserverAddress=127.0.0.0:50051 -Daction=manifest -DinPath=../../manifest.csv
 
 
