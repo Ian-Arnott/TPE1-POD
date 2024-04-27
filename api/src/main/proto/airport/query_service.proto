@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package airport;
+
+service QueryService {
+  rpc QueryCounters(QueryCountersRequest) returns(QueryCounterResponse);
+  rpc QueryCheckIns(QueryCheckInsRequest) returns(QueryCheckInsResponse);
+}
+
+message QueryCountersRequest {
+    string sectorName = 1;
+}
+
+message QueryCheckInsRequest {
+  string sectorName = 1;
+  string airlineName = 2;
+}
+
+message QueryCounterResponse {
+  repeated QueryCounterItem queryList = 1;
+}
+
+message QueryCheckInsResponse {
+  repeated QueryCheckInItem queryList = 1;
+}
+
+message QueryCheckInItem {
+  string sectorName = 1;
+  int32 counter = 2;
+  string airlineName = 3;
+  string flightCode = 4;
+  string bookingCode = 5;
+}
+
+message QueryCounterItem {
+  string sectorName = 1;
+  int32 firstCounter = 2;
+  int32 lastCounter = 3;
+  string airlineName = 4;
+  repeated string flights = 5;
+  int32 people = 6;
+}

@@ -3,9 +3,7 @@ package ar.edu.itba.pod.grpc.client.utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +46,16 @@ public class ClientUtils {
             return reader.readAll();
         } catch (IOException e) {
             throw new RuntimeException(String.format("Error reading CSV file: %s", path));
+        }
+    }
+
+    public static void createOutputFile(String outPath, String string) {
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(outPath));
+            writer.write(string);
+            writer.close();
+        } catch (IOException e) {
+            logger.error("Error creating output file");
         }
     }
 }

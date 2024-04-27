@@ -12,7 +12,8 @@ public enum ClientArgs {
     AIRLINE("airline"),
     COUNTER("counter"),
     BOOKING("booking"),
-    COUNTER_COUNT("counterCount");
+    COUNTER_COUNT("counterCount"),
+    OUT_PATH("outPath");
 
     private final String value;
     ClientArgs(String value) {

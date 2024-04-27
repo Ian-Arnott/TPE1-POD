@@ -1,6 +1,7 @@
 package ar.edu.itba.pod.grpc.server.repository;
 
 import airport.NotifyServiceOuterClass;
+import airport.QueryServiceOuterClass;
 import ar.edu.itba.pod.grpc.server.exeptions.SectorMapIsEmptyException;
 import airport.CounterAssignmentServiceOuterClass;
 import ar.edu.itba.pod.grpc.server.exeptions.NonPositiveCounterException;
@@ -345,5 +346,51 @@ public class AirportRepository {
         if (airline == null)
             throw new AirlineDoesNotExistException(airlineName);
         return airline.unregisterForNotifications();
+    }
+
+    public Iterable<? extends QueryServiceOuterClass.QueryCounterItem> getCountersQuery(String sectorName) {
+        if (!sectorMap.containsKey(sectorName))
+            throw new SectorDoesNotExistsException(sectorName);
+        List<QueryServiceOuterClass.QueryCounterItem> list = new ArrayList<>();
+        int last = 0;
+        int contiguous = 0;
+        Map<Integer, Counter> counterMap = sectorMap.get(sectorName).getCounterMap();
+        QueryServiceOuterClass.QueryCounterItem.Builder item = QueryServiceOuterClass.QueryCounterItem.newBuilder();
+        for (Counter counter : sectorMap.get(sectorName).getCounterMap().values()) {
+            item.setSectorName(sectorName);
+            if (counter.getCounterRange() != null && counter.getNum() > last) {
+                item.setFirstCounter(counter.getFirstInRange().get())
+                        .setLastCounter(counter.getLastInRange().get())
+                        .setAirlineName(counter.getAirline().getName())
+                        .setPeople(counter.getQueueLength());
+                counter.getFlights().forEach( flight -> item.addFlights(flight.getCode()));
+                last = counter.getLastInRange().get();
+                list.add(item.build());
+                item.clear();
+            }
+            System.out.println(sectorName);
+            if (counter.getCounterRange() == null) {
+                if (contiguous == 0) {
+                    System.out.println("added counter as first: " + counter.getNum());
+                    item.setFirstCounter(counter.getNum());
+                    contiguous = counter.getNum();
+                }
+                if (counter.getNum() > contiguous + 1 || !counterMap.containsKey(contiguous+1)) {
+                    item.setLastCounter(contiguous)
+                            .setAirlineName("-")
+                            .addFlights("-");
+                    System.out.println("added counter as last: " + contiguous + " because current counter=" + counter.getNum());
+                    list.add(item.build());
+                    item.clear();
+                    contiguous = (!counterMap.containsKey(contiguous+1)) ? 0 : counter.getNum();
+                }
+                else contiguous++;
+            }
+        }
+        return list;
+    }
+
+    public ConcurrentMap<String, Sector> getSectorMap() {
+        return sectorMap;
     }
 }
