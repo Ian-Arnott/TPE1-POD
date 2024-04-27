@@ -359,15 +359,24 @@ public class AirportRepository {
     }
 
     public List<? extends QueryServiceOuterClass.QueryCounterItem> getCountersQuery(String sectorName) {
-        if (!sectorMap.containsKey(sectorName))
-            throw new SectorDoesNotExistsException(sectorName);
+        boolean isEmpty = true;
+        for (Sector sector : sectorMap.values()) {
+            if (!sector.getCounterMap().isEmpty()) {
+                isEmpty = false;
+                break;
+            }
+        }
+        if (isEmpty)
+            throw new NoCountersAddedException();
 
         List<QueryServiceOuterClass.QueryCounterItem> list = new ArrayList<>();
+        if (!sectorMap.containsKey(sectorName)) {
+            return list;
+        }
+
         int last = 0;
         int contiguous = 0;
         Map<Integer, Counter> counterMap = sectorMap.get(sectorName).getCounterMap();
-        if (counterMap.isEmpty())
-            throw new CountersAreNotAssignedException();
         QueryServiceOuterClass.QueryCounterItem.Builder item = QueryServiceOuterClass.QueryCounterItem.newBuilder();
         for (Counter counter : sectorMap.get(sectorName).getCounterMap().values()) {
             item.setSectorName(sectorName);
