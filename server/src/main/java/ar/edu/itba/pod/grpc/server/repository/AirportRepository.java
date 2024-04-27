@@ -37,6 +37,7 @@ public class AirportRepository {
     private final ConcurrentMap<String, Airline> airlines;
     private final ConcurrentMap<String, Flight> flightConcurrentMap;
     private final ConcurrentMap<String, Booking> bookingConcurrentMap;
+    private final ConcurrentLinkedQueue<Booking> checkedInBookings;
     private final ConcurrentMap<String, Sector> sectorMap;
     private final String counterLock = "counter lock";
 
@@ -50,6 +51,12 @@ public class AirportRepository {
         this.bookingConcurrentMap = new ConcurrentHashMap<>();
 
         lastCounterAdded = 1;
+        checkedInBookings = new ConcurrentLinkedQueue<>();
+    }
+
+
+    public synchronized ConcurrentMap<String, Sector> getSectorMap() {
+        return sectorMap;
     }
 
     public synchronized static AirportRepository getInstance() {
@@ -278,7 +285,10 @@ public class AirportRepository {
                 responseObserver.onNext(CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse.newBuilder()
                         .setSuccessful(false).setCounter(i).build());
             } else {
-                booking.getCheckedIn().set(true);
+                booking.checkIn();
+                booking.getCheckedInInfo().setSector(sector);
+                booking.getCheckedInInfo().setCounter(counter);
+                checkedInBookings.add(booking);
                 responseObserver.onNext(CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse.newBuilder()
                         .setCounter(i)
                         .setBooking(booking.getCode()).setFlight(booking.getFlight().getCode())
@@ -348,13 +358,16 @@ public class AirportRepository {
         return airline.unregisterForNotifications();
     }
 
-    public Iterable<? extends QueryServiceOuterClass.QueryCounterItem> getCountersQuery(String sectorName) {
+    public List<? extends QueryServiceOuterClass.QueryCounterItem> getCountersQuery(String sectorName) {
         if (!sectorMap.containsKey(sectorName))
             throw new SectorDoesNotExistsException(sectorName);
+
         List<QueryServiceOuterClass.QueryCounterItem> list = new ArrayList<>();
         int last = 0;
         int contiguous = 0;
         Map<Integer, Counter> counterMap = sectorMap.get(sectorName).getCounterMap();
+        if (counterMap.isEmpty())
+            throw new CountersAreNotAssignedException();
         QueryServiceOuterClass.QueryCounterItem.Builder item = QueryServiceOuterClass.QueryCounterItem.newBuilder();
         for (Counter counter : sectorMap.get(sectorName).getCounterMap().values()) {
             item.setSectorName(sectorName);
@@ -387,7 +400,21 @@ public class AirportRepository {
         return list;
     }
 
-    public ConcurrentMap<String, Sector> getSectorMap() {
-        return sectorMap;
+
+    public List<QueryServiceOuterClass.QueryCheckInItem> getBookingsQuery( ) {
+        if (checkedInBookings.isEmpty())
+            throw new NoBookingsCheckedInException();
+        List<QueryServiceOuterClass.QueryCheckInItem> list = new ArrayList<>();
+        QueryServiceOuterClass.QueryCheckInItem.Builder item = QueryServiceOuterClass.QueryCheckInItem.newBuilder();
+        for (Booking booking : checkedInBookings) {
+            item.setSectorName(booking.getCheckedInInfo().getSector().getName())
+                    .setAirlineName(booking.getFlight().getAirline().getName())
+                    .setFlightCode(booking.getFlight().getCode())
+                    .setCounter(booking.getCheckedInInfo().getCounter().getNum())
+                    .setBookingCode(booking.getCode());
+            list.add(item.build());
+            item.clear();
+        }
+        return list;
     }
 }

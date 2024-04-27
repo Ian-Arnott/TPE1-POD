@@ -36,6 +36,13 @@ public class QueryService extends QueryServiceGrpc.QueryServiceImplBase {
 
     @Override
     public void queryCheckIns(QueryServiceOuterClass.QueryCheckInsRequest request, StreamObserver<QueryServiceOuterClass.QueryCheckInsResponse> responseObserver) {
-        super.queryCheckIns(request, responseObserver);
+        QueryServiceOuterClass.QueryCheckInsResponse.Builder response = QueryServiceOuterClass.QueryCheckInsResponse.newBuilder();
+        if (!request.getSectorName().isEmpty()){
+            response.addAllQueryList(repository.getBookingsQuery().stream().filter(b -> b.getSectorName().equals(request.getSectorName())).toList());
+        } else {
+            response.addAllQueryList(repository.getBookingsQuery());
+        }
+        responseObserver.onNext(response.build());
+        responseObserver.onCompleted();
     }
 }

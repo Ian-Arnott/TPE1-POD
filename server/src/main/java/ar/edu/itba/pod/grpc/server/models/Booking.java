@@ -1,26 +1,32 @@
 package ar.edu.itba.pod.grpc.server.models;
 
+import ar.edu.itba.pod.grpc.server.models.response.CheckedInInfo;
+
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Booking {
     private final String code;
     private final Flight flight;
-    private final AtomicBoolean checkedIn;
+    private final CheckedInInfo checkedInInfo;
     private final AtomicBoolean inQueue;
 
     public Booking(String code, Flight flight) {
         this.code = code;
         this.flight = flight;
-        this.checkedIn = new AtomicBoolean(false);
+        this.checkedInInfo = new CheckedInInfo();
         inQueue = new AtomicBoolean(false);
     }
 
     public AtomicBoolean getCheckedIn() {
-        return checkedIn;
+        return checkedInInfo.getCheckedIn();
+    }
+
+    public CheckedInInfo getCheckedInInfo() {
+        return checkedInInfo;
     }
 
     public void checkIn() {
-        checkedIn.set(true);
+        checkedInInfo.getCheckedIn().set(true);
     }
 
 
