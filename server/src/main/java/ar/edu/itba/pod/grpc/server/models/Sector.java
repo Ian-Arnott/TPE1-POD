@@ -51,6 +51,8 @@ public class Sector {
                         if (flight.getPending().get())
                             flight.getPending().set(false);
                         flight.getCheckingIn().set(true);
+                        flight.setSectorName(name);
+                        flight.setCounterRange(counterRange);
                     }
                     pendingAssignment.notifyAssignedPending(counterRange, name);
                     pendingAssignments.remove(pendingAssignment);

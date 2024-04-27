@@ -6,22 +6,17 @@ import "google/protobuf/empty.proto";
 package airport;
 
 service CheckInService {
-  rpc FetchCounter(Booking) returns(FetchCounterResponse);
+  rpc FetchCounter(google.protobuf.StringValue) returns(FetchCounterResponse);
   rpc PassengerCheckIn(PassengerCheckInRequest) returns(PassengerCheckInResponse);
-  rpc PassengerStatus(Booking) returns(PassengerStatusResponse);
-}
-
-message Booking {
-  string booking = 1;
+  rpc PassengerStatus(google.protobuf.StringValue) returns(PassengerStatusResponse);
 }
 
 message FetchCounterResponse {
-  string flight = 1;
-  string airline = 2;
-  int32 firstCounter = 3;
-  int32 lastCounter = 4;
-  string sectorName = 5;
-  int32 peopleInLine = 6;
+  string flightCode = 1;
+  string airlineName = 2;
+  repeated int32 counters = 3;
+  string sectorName = 4;
+  int32 peopleAmountInLine = 5;
 }
 
 message PassengerCheckInRequest {

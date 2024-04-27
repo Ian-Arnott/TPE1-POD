@@ -7,15 +7,14 @@ import airport.AdminAirportServiceOuterClass.AddSectorRequest;
 import airport.AdminAirportServiceOuterClass.ManifestRequest;
 import airport.CheckInServiceGrpc;
 import airport.CheckInServiceOuterClass;
+import airport.CounterAssignmentServiceOuterClass;
 import ar.edu.itba.pod.grpc.client.utils.ClientArgs;
-import ar.edu.itba.pod.grpc.client.utils.callback.AddCountersResponseFutureCallback;
-import ar.edu.itba.pod.grpc.client.utils.callback.AddSectorResponseFutureCallback;
-import ar.edu.itba.pod.grpc.client.utils.callback.ManifestResponseFutureCallback;
-import ar.edu.itba.pod.grpc.client.utils.callback.PassengerCheckinFutureCallback;
+import ar.edu.itba.pod.grpc.client.utils.callback.*;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.BoolValue;
 import com.google.protobuf.Empty;
+import com.google.protobuf.StringValue;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.slf4j.Logger;
@@ -51,6 +50,17 @@ public class PassengerClient {
 
         switch (action) {
             case "fetchCounter" -> {
+                String bookingCode = argMap.get(ClientArgs.BOOKING.getValue());
+
+                latch = new CountDownLatch(1);
+
+                ListenableFuture<CheckInServiceOuterClass.FetchCounterResponse> listenableFuture =
+                        stub.fetchCounter(StringValue.of(bookingCode));
+                Futures.addCallback(
+                        listenableFuture,
+                        new FetchCounterResponseFutureCallback(logger, latch),
+                        Runnable::run
+                );
             }
             case "passengerCheckin" -> {
                 String counterNumber = argMap.get(ClientArgs.COUNTER.getValue());

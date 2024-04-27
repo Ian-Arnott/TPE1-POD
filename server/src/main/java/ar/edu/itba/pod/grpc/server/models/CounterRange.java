@@ -10,6 +10,10 @@ public class CounterRange {
     private final List<Counter> counters;
     private final ConcurrentLinkedQueue<Booking> bookingQueue;
 
+    public List<Integer> getCounters() {
+        return counters.stream().map(Counter::getNum).sorted().toList();
+    }
+
     private final Airline airline;
     private final ConcurrentLinkedQueue<Flight> flights;
 

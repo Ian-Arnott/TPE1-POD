@@ -16,7 +16,7 @@ public class Flight {
     private final AtomicBoolean checkingIn;
     private final AtomicBoolean pending;
     private String sectorName;
-
+    private CounterRange counterRange;
 
     public Flight(String code, Airline airline) {
         this.code = code;
@@ -26,6 +26,7 @@ public class Flight {
         this.checkingIn = new AtomicBoolean(false);
         this.pending = new AtomicBoolean(false);
         sectorName = null;
+        counterRange = null;
     }
 
     public String getCode() {
@@ -60,6 +61,14 @@ public class Flight {
         return sectorName;
     }
 
+    public void setCounterRange(CounterRange counterRange) {
+        this.counterRange = counterRange;
+    }
+
+    public CounterRange getCounterRange() {
+        return counterRange;
+    }
+
     @Override
     public String toString() {
         return code;
@@ -70,11 +79,11 @@ public class Flight {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Flight flight = (Flight) o;
-        return Objects.equals(code, flight.code) && Objects.equals(airline, flight.airline) && Objects.equals(bookings, flight.bookings) && (checkedIn.get() == flight.checkedIn.get()) && (checkingIn == flight.checkingIn) && (pending == flight.pending) && Objects.equals(sectorName, flight.sectorName);
+        return Objects.equals(code, flight.code) && Objects.equals(airline, flight.airline) && Objects.equals(bookings, flight.bookings) && (checkedIn.get() == flight.checkedIn.get()) && (checkingIn == flight.checkingIn) && (pending == flight.pending) && Objects.equals(sectorName, flight.sectorName)  && Objects.equals(counterRange, flight.counterRange);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(code, airline, bookings, checkedIn, checkingIn, pending, sectorName);
+        return Objects.hash(code, airline, bookings, checkedIn, checkingIn, pending, sectorName, counterRange);
     }
 }

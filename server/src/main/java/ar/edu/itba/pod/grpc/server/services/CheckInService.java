@@ -2,16 +2,42 @@ package ar.edu.itba.pod.grpc.server.services;
 
 import airport.CheckInServiceGrpc;
 import airport.CheckInServiceOuterClass;
+import airport.CounterAssignmentServiceOuterClass;
+import ar.edu.itba.pod.grpc.server.models.Flight;
+import ar.edu.itba.pod.grpc.server.models.PendingAssignment;
 import ar.edu.itba.pod.grpc.server.models.requests.PassengerCheckInRequestModel;
+import ar.edu.itba.pod.grpc.server.models.response.FetchCounterResponseModel;
 import ar.edu.itba.pod.grpc.server.models.response.PassengerCheckInResponseModel;
 import ar.edu.itba.pod.grpc.server.repository.AirportRepository;
+import com.google.protobuf.StringValue;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 public class CheckInService extends CheckInServiceGrpc.CheckInServiceImplBase {
     private static final AirportRepository repository = AirportRepository.getInstance();
     private static final Logger logger = LoggerFactory.getLogger(CheckInService.class);
+
+    @Override
+    public void fetchCounter(StringValue request, StreamObserver<CheckInServiceOuterClass.FetchCounterResponse> responseObserver) {
+        FetchCounterResponseModel res = repository.fetchCounter(request);
+
+        CheckInServiceOuterClass.FetchCounterResponse fetchCounterResponse =
+                CheckInServiceOuterClass.FetchCounterResponse.newBuilder()
+                        .setFlightCode(res.getFlightCode())
+                        .setAirlineName(res.getAirlineName())
+                        .addAllCounters(res.getCounters())
+                        .setSectorName(res.getSectorName())
+                        .setPeopleAmountInLine(res.getPeopleAmountInLine()).build();
+
+        logger.info("SERVER - The fetchCounter action is finished.");
+        responseObserver.onNext(fetchCounterResponse);
+        responseObserver.onCompleted();
+    }
 
     @Override
     public void passengerCheckIn(CheckInServiceOuterClass.PassengerCheckInRequest request, StreamObserver<CheckInServiceOuterClass.PassengerCheckInResponse> responseObserver) {

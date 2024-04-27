@@ -42,6 +42,7 @@ public class GlobalExceptionHandlerInterceptor implements ServerInterceptor {
                 Map.entry(SectorDoesNotExistsException.class, Code.NOT_FOUND),
                 Map.entry(NonPositiveCounterException.class, Code.INVALID_ARGUMENT),
                 Map.entry(BookingAlreadyExistsException.class, Code.ALREADY_EXISTS),
+                Map.entry(BookingDoesNotExistException.class, Code.NOT_FOUND),
                 Map.entry(FlightExistsForOtherAirlineException.class, Code.ALREADY_EXISTS),
                 Map.entry(FlightDoesNotExistsException.class, Code.NOT_FOUND),
                 Map.entry(FlightDoesNotHaveBookingsException.class, Code.ABORTED),

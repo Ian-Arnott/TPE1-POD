@@ -18,6 +18,7 @@ import ar.edu.itba.pod.grpc.server.models.Counter;
 import ar.edu.itba.pod.grpc.server.models.Flight;
 import ar.edu.itba.pod.grpc.server.models.requests.*;
 import ar.edu.itba.pod.grpc.server.models.response.CounterRangeAssignmentResponseModel;
+import ar.edu.itba.pod.grpc.server.models.response.FetchCounterResponseModel;
 import ar.edu.itba.pod.grpc.server.models.response.FreeCounterRangeResponseModel;
 import ar.edu.itba.pod.grpc.server.models.response.PassengerCheckInResponseModel;
 import com.google.protobuf.StringValue;
@@ -199,6 +200,8 @@ public class AirportRepository {
                 if (flight.getPending().get())
                     flight.getPending().set(false);
                 flight.getCheckingIn().set(true);
+                flight.setSectorName(sector.getName());
+                flight.setCounterRange(counterRange);
             }
             if (airline.isShouldNotify())
                 airline.notifyAssignedRange(counterRange, sector.getName());
@@ -253,6 +256,35 @@ public class AirportRepository {
             airline.notifyFreeCounterRange(responseModel.getFlights(), requestModel.getFromVal(), responseModel.getFreedAmount(), sector.getName());
         sector.resolvePending();
         return responseModel;
+    }
+
+    public FetchCounterResponseModel fetchCounter(StringValue bookingCode) {
+        String bookingCodeString = bookingCode.getValue();
+
+        if (!bookingConcurrentMap.containsKey(bookingCodeString)) {
+            throw new BookingDoesNotExistException(bookingCodeString);
+        }
+
+        Booking booking = bookingConcurrentMap.get(bookingCodeString);
+
+        if (booking.getFlight().getCheckedIn().get() || booking.getFlight().getCounterRange() == null) {
+            return new FetchCounterResponseModel(
+                    booking.getFlight().getCode(),
+                    booking.getFlight().getAirline().getName(), new ArrayList<>(), "", 0);
+        }
+
+        AtomicInteger p = new AtomicInteger();
+        booking.getFlight().getBookings().forEach((code, b) -> {
+            if (b.getInQueue().get() && !b.getCheckedIn().get()) p.getAndIncrement();
+        });
+
+        return new FetchCounterResponseModel(
+                booking.getFlight().getCode(),
+                booking.getFlight().getAirline().getName(),
+                booking.getFlight().getCounterRange().getCounters(),
+                booking.getFlight().getSectorName(),
+                p.get()
+        );
     }
 
     public synchronized void performCounterCheckIn(PerformCounterCheckInRequestModel requestModel, StreamObserver<CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse> responseObserver) {
