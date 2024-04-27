@@ -368,7 +368,6 @@ public class AirportRepository {
                 list.add(item.build());
                 item.clear();
             }
-            System.out.println(sectorName);
             if (counter.getCounterRange() == null) {
                 if (contiguous == 0) {
                     item.setFirstCounter(counter.getNum());
