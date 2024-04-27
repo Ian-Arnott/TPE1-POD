@@ -371,7 +371,6 @@ public class AirportRepository {
             System.out.println(sectorName);
             if (counter.getCounterRange() == null) {
                 if (contiguous == 0) {
-                    System.out.println("added counter as first: " + counter.getNum());
                     item.setFirstCounter(counter.getNum());
                     contiguous = counter.getNum();
                 }
@@ -379,7 +378,6 @@ public class AirportRepository {
                     item.setLastCounter(contiguous)
                             .setAirlineName("-")
                             .addFlights("-");
-                    System.out.println("added counter as last: " + contiguous + " because current counter=" + counter.getNum());
                     list.add(item.build());
                     item.clear();
                     contiguous = (!counterMap.containsKey(contiguous+1)) ? 0 : counter.getNum();
