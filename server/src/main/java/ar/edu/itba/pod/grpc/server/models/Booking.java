@@ -41,4 +41,8 @@ public class Booking {
     public AtomicBoolean getInQueue() {
         return inQueue;
     }
+
+    public String getAirlineName() {
+        return flight.getAirline().getName();
+    }
 }

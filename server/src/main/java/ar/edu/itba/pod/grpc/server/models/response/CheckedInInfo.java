@@ -7,8 +7,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CheckedInInfo {
     private final AtomicBoolean checkedIn;
-    private Sector sector;
-    private Counter counter;
+    private String sector;
+    private int counter;
 
     public CheckedInInfo() {
         checkedIn = new AtomicBoolean(false);
@@ -18,19 +18,19 @@ public class CheckedInInfo {
         return checkedIn;
     }
 
-    public Sector getSector() {
+    public String getSector() {
         return sector;
     }
 
-    public Counter getCounter() {
+    public int getCounter() {
         return counter;
     }
 
-    public void setSector(Sector sector) {
+    public void setSector(String sector) {
         this.sector = sector;
     }
 
-    public void setCounter(Counter counter) {
+    public void setCounter(int counter) {
         this.counter = counter;
     }
 }

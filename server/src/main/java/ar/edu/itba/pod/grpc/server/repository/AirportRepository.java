@@ -10,7 +10,6 @@ import ar.edu.itba.pod.grpc.server.exeptions.SectorDoesNotExistsException;
 import ar.edu.itba.pod.grpc.server.models.Sector;
 import ar.edu.itba.pod.grpc.server.models.requests.ManifestRequestModel;
 
-import java.awt.print.Book;
 import java.util.*;
 import ar.edu.itba.pod.grpc.server.exeptions.*;
 import ar.edu.itba.pod.grpc.server.models.*;
@@ -287,8 +286,8 @@ public class AirportRepository {
                         .setSuccessful(false).setCounter(i).build());
             } else {
                 booking.checkIn();
-                booking.getCheckedInInfo().setSector(sector);
-                booking.getCheckedInInfo().setCounter(counter);
+                booking.getCheckedInInfo().setSector(sector.getName());
+                booking.getCheckedInInfo().setCounter(counter.getNum());
                 checkedInBookings.add(booking);
                 responseObserver.onNext(CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse.newBuilder()
                         .setCounter(i)
@@ -321,7 +320,6 @@ public class AirportRepository {
         if (booking.getInQueue().get())
             throw new BookingAlreadyInLineException(booking.getCode());
 
-        // asumir que el airline esta bien??
         Airline airline = counter.getAirline();
         int peopleInLine = counter.addBookingToQueue(booking);
 
@@ -415,8 +413,20 @@ public class AirportRepository {
         if (checkedInBookings.isEmpty())
             throw new NoBookingsCheckedInException();
         List<Booking> bookingList = new ArrayList<>();
+        if (sectorName.isEmpty() && airlineName.isEmpty()) {
+            bookingList.addAll(checkedInBookings);
+            return bookingList;
+        }
         for  (Booking booking : checkedInBookings) {
-            bookingList.add(booking);
+            if (sectorName.isPresent() && airlineName.isPresent())
+                if (booking.getAirlineName().equals(airlineName.get()) && booking.getCheckedInInfo().getSector().equals(sectorName.get()))
+                    bookingList.add(booking);
+            if (sectorName.isPresent() && airlineName.isEmpty())
+                if (booking.getCheckedInInfo().getSector().equals(sectorName.get()))
+                    bookingList.add(booking);
+            if (sectorName.isEmpty())
+                if (booking.getAirlineName().equals(airlineName.get()))
+                    bookingList.add(booking);
         }
         return bookingList;
     }
