@@ -151,6 +151,11 @@ public class AirportRepository {
         ConcurrentLinkedQueue<Flight> flightQueue = new ConcurrentLinkedQueue<>();
         AtomicReference<Integer> numberOfPassengers = new AtomicReference<>(0);
 
+        Airline airline = airlines.get(requestModel.getAirlineName());
+        if (airline == null) {
+            throw new AirlineDoesNotExistException(requestModel.getAirlineName());
+        }
+
         requestModel.getFlights().forEach(flightCode -> {
             if (!flightConcurrentMap.containsKey(flightCode))
                 throw new FlightDoesNotExistsException(flightCode);
@@ -175,15 +180,17 @@ public class AirportRepository {
 
         if (availableCounters.isEmpty() || availableCounters.size()!=requestModel.getCountVal()) {
             ConcurrentLinkedQueue<PendingAssignment> pendingAssignments = sector.getPendingAssignments();
+            int amountPendingAhead = pendingAssignments.size();
             CounterRangeAssignmentResponseModel responseModel = new CounterRangeAssignmentResponseModel(
                     0,0,requestModel.getCountVal(),
-                    pendingAssignments.size());
+                    amountPendingAhead);
             for (Flight flight : flightQueue) {
                 flight.getPending().set(true);
             }
-            pendingAssignments.add(
-                    new PendingAssignment(flightQueue, requestModel.getAirlineName(), requestModel.getCountVal())
-            );
+            PendingAssignment pendingAssignment = new PendingAssignment(airline, flightQueue, requestModel.getAirlineName(), requestModel.getCountVal());
+            pendingAssignments.add(pendingAssignment);
+            if (airline.isShouldNotify())
+                airline.notifyPendingAssignment(pendingAssignment, sector.getName(),amountPendingAhead);
             return responseModel;
         } else {
             CounterRange counterRange = new CounterRange(availableCounters, airlines.get(requestModel.getAirlineName()), flightQueue);
@@ -192,6 +199,8 @@ public class AirportRepository {
                     flight.getPending().set(false);
                 flight.getCheckingIn().set(true);
             }
+            if (airline.isShouldNotify())
+                airline.notifyAssignedRange(counterRange, sector.getName());
             return new CounterRangeAssignmentResponseModel(requestModel.getCountVal(), counterRange.getLastCounter().getNum()
                     , 0,0);
         }
@@ -224,14 +233,14 @@ public class AirportRepository {
         Sector sector = sectorMap.get(requestModel.getSectorName());
 
         Counter counter = sector.getCounterMap().get(requestModel.getFromVal());
-
         if (counter == null)
             throw new CountersAreNotAssignedException();
         if (!counter.getIsCheckingIn().get())
             throw new CountersAreNotAssignedException();
         CounterRange counterRange = counter.getCounterRange();
+        Airline airline = counter.getAirline();
 
-        if (!counter.getAirline().getName().equals(requestModel.getAirline()))
+        if (!airline.getName().equals(requestModel.getAirline()))
             throw new CounterIsCheckingInOtherAirlineException();
         if (!counter.getIsFirstInRange().get())
             throw new CounterIsNotFirstInRangeException();
@@ -239,8 +248,8 @@ public class AirportRepository {
             throw new StillCheckingInBookingsException();
 
         FreeCounterRangeResponseModel responseModel = counterRange.free();
-
-
+        if (airline.isShouldNotify())
+            airline.notifyFreeCounterRange(responseModel.getFlights(), requestModel.getFromVal(), responseModel.getFreedAmount(), sector.getName());
         sector.resolvePending();
         return responseModel;
     }
@@ -261,7 +270,7 @@ public class AirportRepository {
             throw new CounterIsNotFirstInRangeException();
 
         CounterRange counterRange = counter.getCounterRange();
-
+        Airline airline = counter.getAirline();
         for (int i = requestModel.getFromVal().get(); i <= counter.getLastInRange().get(); i++) {
             Booking booking = counterRange.performCheckIn();
             if (booking == null) {
@@ -274,6 +283,8 @@ public class AirportRepository {
                         .setBooking(booking.getCode()).setFlight(booking.getFlight().getCode())
                         .setSuccessful(true)
                         .build());
+                if (airline.isShouldNotify())
+                    airline.notifyPassengerCheckIn(booking,i,sector.getName());
             }
             if (i == counter.getLastInRange().get()) {
                 responseObserver.onCompleted();
@@ -298,14 +309,19 @@ public class AirportRepository {
         if (booking.getInQueue().get())
             throw new BookingAlreadyInLineException(booking.getCode());
 
+        // asumir que el airline esta bien??
+        Airline airline = counter.getAirline();
         int peopleInLine = counter.addBookingToQueue(booking);
 
-        return new PassengerCheckInResponseModel(
+        PassengerCheckInResponseModel responseModel = new PassengerCheckInResponseModel(
                 counter.getLastInRange(),
                 new AtomicInteger(peopleInLine),
                 booking.getFlight().getCode(),
                 booking.getFlight().getAirline().getName()
         );
+        if (airline.isShouldNotify())
+            airline.notifyBookingInQueue(booking, peopleInLine,counter, requestModel.getSectorName());
+        return responseModel;
     }
 
     public ConcurrentLinkedQueue<PendingAssignment> listPendingAssignments(StringValue sectorName) {
@@ -321,7 +337,7 @@ public class AirportRepository {
         if (airline == null)
             throw new AirlineDoesNotExistException(airlineName);
         airline.registerForNotifications(responseObserver);
-        //airline.notifyRegistered();
+        airline.notifyRegistered();
     }
 
     public StreamObserver<NotifyServiceOuterClass.Notification> unregisterForNotification(String airlineName) {

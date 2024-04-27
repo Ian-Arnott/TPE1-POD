@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Sector {
     private final String name;
@@ -36,26 +39,35 @@ public class Sector {
 
     public synchronized void resolvePending() {
         if (!pendingAssignments.isEmpty()) {
-            PendingAssignment front = pendingAssignments.peek();
-            PendingAssignment pendingAssignment;
-            List<Counter> counters = null;
-
-            while (front != null) {
-                int countVal = front.getCountVal().get();
-                counters = getAvailableCounters(countVal, this.counterMap);
-                if (counters == null || counters.size() < countVal) {
-                    break;
+            AtomicReference<List<Counter>> counters = new AtomicReference<>();
+            AtomicInteger countVal = new AtomicInteger();
+            AtomicBoolean pendingsChanged = new AtomicBoolean(false);
+            pendingAssignments.forEach(pendingAssignment -> {
+                countVal.set(pendingAssignment.getCountVal().get());
+                counters.set(getAvailableCounters(countVal.get(), counterMap));
+                if (counters.get() != null && counters.get().size() == countVal.get()) {
+                    CounterRange counterRange = new CounterRange(counters.get(),pendingAssignment.getAirline(), pendingAssignment.getFlights());
+                    for (Flight flight : pendingAssignment.getFlights()) {
+                        if (flight.getPending().get())
+                            flight.getPending().set(false);
+                        flight.getCheckingIn().set(true);
+                    }
+                    pendingAssignment.notifyAssignedPending(counterRange, name);
+                    pendingAssignments.remove(pendingAssignment);
+                    pendingsChanged.set(true);
                 }
-                pendingAssignment = pendingAssignments.poll();
-                CounterRange counterRange = new CounterRange(counters,pendingAssignment.getFlights().peek().getAirline(), pendingAssignment.getFlights());
-                for (Flight flight : pendingAssignment.getFlights()) {
-                    if (flight.getPending().get())
-                        flight.getPending().set(false);
-                    flight.getCheckingIn().set(true);
-                }
-                front = pendingAssignments.peek();
-            }
+            });
+            if (pendingsChanged.get())
+                notifyChangedPending();
         }
+    }
+
+    private void notifyChangedPending() {
+        AtomicInteger pos = new AtomicInteger(1);
+        int pendingAmount = pendingAssignments.size();
+        pendingAssignments.forEach(pendingAssignment -> {
+            pendingAssignment.notifyChange(pendingAssignment.getCountVal(),pendingAssignment.getFlights(),pos, name, pendingAmount);
+        });
     }
 
     public List<Counter> getAvailableCounters(int countVal, Map<Integer, Counter> counterMap) {

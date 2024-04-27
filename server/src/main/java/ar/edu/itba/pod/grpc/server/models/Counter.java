@@ -65,4 +65,11 @@ public class Counter {
         }
         return counterRange.getQueueLength();
     }
+
+    public AtomicInteger getFirstInRange() {
+        if (counterRange == null) {
+            return new AtomicInteger(0);
+        }
+        return new AtomicInteger(counterRange.getFirstCounter().getNum());
+    }
 }

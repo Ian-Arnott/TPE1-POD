@@ -2,6 +2,7 @@ package ar.edu.itba.pod.grpc.server.models;
 
 import org.checkerframework.checker.units.qual.A;
 
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -59,5 +60,21 @@ public class Flight {
         return sectorName;
     }
 
+    @Override
+    public String toString() {
+        return code;
+    }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Flight flight = (Flight) o;
+        return Objects.equals(code, flight.code) && Objects.equals(airline, flight.airline) && Objects.equals(bookings, flight.bookings) && (checkedIn.get() == flight.checkedIn.get()) && (checkingIn == flight.checkingIn) && (pending == flight.pending) && Objects.equals(sectorName, flight.sectorName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(code, airline, bookings, checkedIn, checkingIn, pending, sectorName);
+    }
 }

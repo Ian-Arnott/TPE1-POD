@@ -31,6 +31,10 @@ public class CounterRange {
         return counters.getLast();
     }
 
+    public int getCounterCount() {
+        return counters.size();
+    }
+
     public Airline getAirline() {
         return airline;
     }

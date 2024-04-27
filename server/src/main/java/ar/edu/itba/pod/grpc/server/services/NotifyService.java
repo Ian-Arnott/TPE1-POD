@@ -1,5 +1,6 @@
 package ar.edu.itba.pod.grpc.server.services;
 
+import airport.Models;
 import airport.NotifyServiceGrpc;
 import airport.NotifyServiceOuterClass;
 import ar.edu.itba.pod.grpc.server.repository.AirportRepository;
@@ -21,7 +22,8 @@ public class NotifyService extends NotifyServiceGrpc.NotifyServiceImplBase {
         StreamObserver<NotifyServiceOuterClass.Notification> notificationStreamObserver =
                 repository.unregisterForNotification(request.getAirlineName());
         notificationStreamObserver.onCompleted();
-        responseObserver.onNext(NotifyServiceOuterClass.NotificationResponse.newBuilder().build());
+        responseObserver.onNext(NotifyServiceOuterClass.NotificationResponse.newBuilder()
+                .setResponse(Models.SimpleStatusResponse.OK).build());
         responseObserver.onCompleted();
     }
 }
