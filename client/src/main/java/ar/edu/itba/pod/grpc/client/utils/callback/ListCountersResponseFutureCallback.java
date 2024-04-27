@@ -47,46 +47,48 @@ public class ListCountersResponseFutureCallback extends AbstractFutureCallback<C
         stringBuilder.append("##################################\n");
         Iterator<CounterAssignmentServiceOuterClass.ListCounterItem> itemIterator = items.iterator();
 
-        CounterAssignmentServiceOuterClass.ListCounterItem currentItem = itemIterator.next();
-        List<CounterAssignmentServiceOuterClass.ListCounterItem> currentBlock = new ArrayList<>();
+        if (itemIterator.hasNext()) {
+            CounterAssignmentServiceOuterClass.ListCounterItem currentItem = itemIterator.next();
+            List<CounterAssignmentServiceOuterClass.ListCounterItem> currentBlock = new ArrayList<>();
 
-        while (itemIterator.hasNext()) {
-            while (shouldAddToCurrentBlock(currentItem, currentBlock)) {
-                currentBlock.add(currentItem);
-                if (itemIterator.hasNext()) {
-                    currentItem = itemIterator.next();
-                } else {
-                    currentItem = null;
-                }
-            }
-            // print line
-            if (!currentBlock.isEmpty()) {
-                CounterAssignmentServiceOuterClass.ListCounterItem firstItem = currentBlock.getFirst();
-                CounterAssignmentServiceOuterClass.ListCounterItem lastItem = currentBlock.getLast();
-
-                stringBuilder.append("(")
-                        .append(firstItem.getCounterNum())
-                        .append("-")
-                        .append(lastItem.getCounterNum())
-                        .append(")\t");
-
-                String airlineName = firstItem.getAirlineName();
-
-                if (airlineName.isEmpty()) {
-                    stringBuilder.append("-").append("\t").append("-").append("\t").append("-").append("\n");
-                } else {
-                    stringBuilder.append(firstItem.getAirlineName()).append("\t");
-                    int flight_i = 0;
-                    for (String f : firstItem.getFlightCodesList()) {
-                        if (flight_i != 0) {
-                            stringBuilder.append("|");
-                        }
-                        stringBuilder.append(f);
-                        flight_i++;
+            while (itemIterator.hasNext()) {
+                while (shouldAddToCurrentBlock(currentItem, currentBlock)) {
+                    currentBlock.add(currentItem);
+                    if (itemIterator.hasNext()) {
+                        currentItem = itemIterator.next();
+                    } else {
+                        currentItem = null;
                     }
-                    stringBuilder.append("\t").append(firstItem.getPeople()).append("\n");
                 }
-                currentBlock.clear();
+                // print line
+                if (!currentBlock.isEmpty()) {
+                    CounterAssignmentServiceOuterClass.ListCounterItem firstItem = currentBlock.getFirst();
+                    CounterAssignmentServiceOuterClass.ListCounterItem lastItem = currentBlock.getLast();
+
+                    stringBuilder.append("(")
+                            .append(firstItem.getCounterNum())
+                            .append("-")
+                            .append(lastItem.getCounterNum())
+                            .append(")\t");
+
+                    String airlineName = firstItem.getAirlineName();
+
+                    if (airlineName.isEmpty()) {
+                        stringBuilder.append("-").append("\t").append("-").append("\t").append("-").append("\n");
+                    } else {
+                        stringBuilder.append(firstItem.getAirlineName()).append("\t");
+                        int flight_i = 0;
+                        for (String f : firstItem.getFlightCodesList()) {
+                            if (flight_i != 0) {
+                                stringBuilder.append("|");
+                            }
+                            stringBuilder.append(f);
+                            flight_i++;
+                        }
+                        stringBuilder.append("\t").append(firstItem.getPeople()).append("\n");
+                    }
+                    currentBlock.clear();
+                }
             }
         }
         // print last empty line if needed

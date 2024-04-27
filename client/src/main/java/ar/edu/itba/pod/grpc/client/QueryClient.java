@@ -4,6 +4,7 @@ import airport.QueryServiceGrpc;
 import airport.QueryServiceOuterClass;
 import ar.edu.itba.pod.grpc.client.utils.ClientArgs;
 import ar.edu.itba.pod.grpc.client.utils.ClientUtils;
+import ar.edu.itba.pod.grpc.client.utils.callback.QueryCheckInsFutureCallback;
 import ar.edu.itba.pod.grpc.client.utils.callback.QueryCountersFutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -50,6 +51,19 @@ public class QueryClient {
             }
             case "checkins" -> {
                 logger.info("Checkins Status Query");
+                final String sectorName = argMap.get(ClientArgs.SECTOR.getValue());
+                final String airlineName = argMap.get(ClientArgs.AIRLINE.getValue());
+                ListenableFuture<QueryServiceOuterClass.QueryCheckInsResponse> listenableFuture;
+                if (sectorName!=null && airlineName!=null) {
+                    listenableFuture = stub.queryCheckIns(QueryServiceOuterClass.QueryCheckInsRequest.newBuilder().setSectorName(sectorName).setAirlineName(airlineName).build());
+                } else if (sectorName == null && airlineName != null) {
+                    listenableFuture = stub.queryCheckIns(QueryServiceOuterClass.QueryCheckInsRequest.newBuilder().setAirlineName(airlineName).build());
+                } else if (sectorName != null && airlineName == null) {
+                    listenableFuture = stub.queryCheckIns(QueryServiceOuterClass.QueryCheckInsRequest.newBuilder().setSectorName(sectorName).build());
+                } else {
+                    listenableFuture = stub.queryCheckIns(QueryServiceOuterClass.QueryCheckInsRequest.newBuilder().build());
+                }
+                Futures.addCallback(listenableFuture, new QueryCheckInsFutureCallback(logger,latch,outPath), Runnable::run);
             }
         }
         try {

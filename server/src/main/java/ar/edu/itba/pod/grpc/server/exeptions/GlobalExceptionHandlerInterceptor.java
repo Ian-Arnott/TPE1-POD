@@ -4,6 +4,7 @@ import com.google.rpc.Code;
 import io.grpc.*;
 import io.grpc.protobuf.StatusProto;
 
+import java.security.InvalidParameterException;
 import java.util.Map;
 
 
@@ -51,7 +52,10 @@ public class GlobalExceptionHandlerInterceptor implements ServerInterceptor {
                 Map.entry(CounterIsNotFirstInRangeException.class, Code.ABORTED),
                 Map.entry(CountersAreNotAssignedException.class, Code.ABORTED),
                 Map.entry(StillCheckingInBookingsException.class, Code.ABORTED),
-                Map.entry(InvalidCounterRangeException.class, Code.INVALID_ARGUMENT)
+                Map.entry(InvalidCounterRangeException.class, Code.INVALID_ARGUMENT),
+                Map.entry(NoBookingsCheckedInException.class, Code.ABORTED),
+                Map.entry(InvalidParameterException.class, Code.INVALID_ARGUMENT),
+                Map.entry(NoCountersAddedException.class, Code.ABORTED)
         );
 
         private void handleException(RuntimeException exception, ServerCall<T, R> serverCall, Metadata headers) {

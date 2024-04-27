@@ -38,6 +38,7 @@ public class AirportRepository {
     private final ConcurrentMap<String, Airline> airlines;
     private final ConcurrentMap<String, Flight> flightConcurrentMap;
     private final ConcurrentMap<String, Booking> bookingConcurrentMap;
+    private final ConcurrentLinkedQueue<Booking> checkedInBookings;
     private final ConcurrentMap<String, Sector> sectorMap;
     private final String counterLock = "counter lock";
 
@@ -51,6 +52,12 @@ public class AirportRepository {
         this.bookingConcurrentMap = new ConcurrentHashMap<>();
 
         lastCounterAdded = 1;
+        checkedInBookings = new ConcurrentLinkedQueue<>();
+    }
+
+
+    public synchronized Set<String> getSectorNames() {
+        return sectorMap.keySet();
     }
 
     public synchronized static AirportRepository getInstance() {
@@ -310,7 +317,10 @@ public class AirportRepository {
                 responseObserver.onNext(CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse.newBuilder()
                         .setSuccessful(false).setCounter(i).build());
             } else {
-                booking.getCheckedIn().set(true);
+                booking.checkIn();
+                booking.getCheckedInInfo().setSector(sector.getName());
+                booking.getCheckedInInfo().setCounter(counter.getNum());
+                checkedInBookings.add(booking);
                 responseObserver.onNext(CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse.newBuilder()
                         .setCounter(i)
                         .setBooking(booking.getCode()).setFlight(booking.getFlight().getCode())
@@ -342,7 +352,6 @@ public class AirportRepository {
         if (booking.getInQueue().get())
             throw new BookingAlreadyInLineException(booking.getCode());
 
-        // asumir que el airline esta bien??
         Airline airline = counter.getAirline();
         int peopleInLine = counter.addBookingToQueue(booking);
 
@@ -380,10 +389,22 @@ public class AirportRepository {
         return airline.unregisterForNotifications();
     }
 
-    public Iterable<? extends QueryServiceOuterClass.QueryCounterItem> getCountersQuery(String sectorName) {
-        if (!sectorMap.containsKey(sectorName))
-            throw new SectorDoesNotExistsException(sectorName);
+    public List<? extends QueryServiceOuterClass.QueryCounterItem> getCountersQuery(String sectorName) {
+        boolean isEmpty = true;
+        for (Sector sector : sectorMap.values()) {
+            if (!sector.getCounterMap().isEmpty()) {
+                isEmpty = false;
+                break;
+            }
+        }
+        if (isEmpty)
+            throw new NoCountersAddedException();
+
         List<QueryServiceOuterClass.QueryCounterItem> list = new ArrayList<>();
+        if (!sectorMap.containsKey(sectorName)) {
+            return list;
+        }
+
         int last = 0;
         int contiguous = 0;
         Map<Integer, Counter> counterMap = sectorMap.get(sectorName).getCounterMap();
@@ -419,7 +440,26 @@ public class AirportRepository {
         return list;
     }
 
-    public ConcurrentMap<String, Sector> getSectorMap() {
-        return sectorMap;
+
+    public List<Booking> getBookingsQuery(Optional<String> sectorName, Optional<String> airlineName) {
+        if (checkedInBookings.isEmpty())
+            throw new NoBookingsCheckedInException();
+        List<Booking> bookingList = new ArrayList<>();
+        if (sectorName.isEmpty() && airlineName.isEmpty()) {
+            bookingList.addAll(checkedInBookings);
+            return bookingList;
+        }
+        for  (Booking booking : checkedInBookings) {
+            if (sectorName.isPresent() && airlineName.isPresent())
+                if (booking.getAirlineName().equals(airlineName.get()) && booking.getCheckedInInfo().getSector().equals(sectorName.get()))
+                    bookingList.add(booking);
+            if (sectorName.isPresent() && airlineName.isEmpty())
+                if (booking.getCheckedInInfo().getSector().equals(sectorName.get()))
+                    bookingList.add(booking);
+            if (sectorName.isEmpty())
+                if (booking.getAirlineName().equals(airlineName.get()))
+                    bookingList.add(booking);
+        }
+        return bookingList;
     }
 }
