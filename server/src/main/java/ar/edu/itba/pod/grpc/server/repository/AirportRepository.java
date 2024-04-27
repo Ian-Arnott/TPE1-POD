@@ -10,6 +10,7 @@ import ar.edu.itba.pod.grpc.server.exeptions.SectorDoesNotExistsException;
 import ar.edu.itba.pod.grpc.server.models.Sector;
 import ar.edu.itba.pod.grpc.server.models.requests.ManifestRequestModel;
 
+import java.awt.print.Book;
 import java.util.*;
 import ar.edu.itba.pod.grpc.server.exeptions.*;
 import ar.edu.itba.pod.grpc.server.models.*;
@@ -55,8 +56,8 @@ public class AirportRepository {
     }
 
 
-    public synchronized ConcurrentMap<String, Sector> getSectorMap() {
-        return sectorMap;
+    public synchronized Set<String> getSectorNames() {
+        return sectorMap.keySet();
     }
 
     public synchronized static AirportRepository getInstance() {
@@ -410,20 +411,13 @@ public class AirportRepository {
     }
 
 
-    public List<QueryServiceOuterClass.QueryCheckInItem> getBookingsQuery( ) {
+    public List<Booking> getBookingsQuery(Optional<String> sectorName, Optional<String> airlineName) {
         if (checkedInBookings.isEmpty())
             throw new NoBookingsCheckedInException();
-        List<QueryServiceOuterClass.QueryCheckInItem> list = new ArrayList<>();
-        QueryServiceOuterClass.QueryCheckInItem.Builder item = QueryServiceOuterClass.QueryCheckInItem.newBuilder();
-        for (Booking booking : checkedInBookings) {
-            item.setSectorName(booking.getCheckedInInfo().getSector().getName())
-                    .setAirlineName(booking.getFlight().getAirline().getName())
-                    .setFlightCode(booking.getFlight().getCode())
-                    .setCounter(booking.getCheckedInInfo().getCounter().getNum())
-                    .setBookingCode(booking.getCode());
-            list.add(item.build());
-            item.clear();
+        List<Booking> bookingList = new ArrayList<>();
+        for  (Booking booking : checkedInBookings) {
+            bookingList.add(booking);
         }
-        return list;
+        return bookingList;
     }
 }
