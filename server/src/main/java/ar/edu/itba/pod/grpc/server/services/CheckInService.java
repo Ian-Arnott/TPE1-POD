@@ -22,6 +22,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class CheckInService extends CheckInServiceGrpc.CheckInServiceImplBase {
     private static final AirportRepository repository = AirportRepository.getInstance();
     private static final Logger logger = LoggerFactory.getLogger(CheckInService.class);
+    private final NotifyService notifyService;
+
+    public CheckInService() {
+        notifyService = new NotifyService();
+    }
 
     @Override
     public void fetchCounter(StringValue request, StreamObserver<CheckInServiceOuterClass.FetchCounterResponse> responseObserver) {
@@ -45,6 +50,16 @@ public class CheckInService extends CheckInServiceGrpc.CheckInServiceImplBase {
         PassengerCheckInRequestModel requestModel = PassengerCheckInRequestModel.fromCheckInRequest(request);
 
         PassengerCheckInResponseModel responseModel = repository.passengerCheckIn(requestModel);
+            notifyService.notifyBookingInQueue(
+                    responseModel.getAirline(),
+                    request.getBooking(),
+                    responseModel.getFlight(),
+                    responseModel.getPeopleInLine().get(),
+                    request.getFirstCounter(),
+                    responseModel.getLastCounter().get(),
+                    requestModel.getSectorName()
+            );
+
         responseObserver.onNext(CheckInServiceOuterClass.PassengerCheckInResponse.newBuilder().
                 setAirline(responseModel.getAirline()).
                 setFlight(responseModel.getFlight())

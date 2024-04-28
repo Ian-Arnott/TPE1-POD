@@ -8,6 +8,7 @@ import ar.edu.itba.pod.grpc.server.exeptions.SectorDoesNotExistsException;
 import ar.edu.itba.pod.grpc.server.models.Sector;
 import ar.edu.itba.pod.grpc.server.models.requests.ManifestRequestModel;
 
+import java.security.InvalidParameterException;
 import java.util.*;
 import ar.edu.itba.pod.grpc.server.exeptions.*;
 import ar.edu.itba.pod.grpc.server.models.*;
@@ -85,7 +86,6 @@ public class AirportRepository {
             lastCounterAdded += counterAmount;
         }
 
-        sector.resolvePending();
         return lastCounterAdded;
     }
 
@@ -193,8 +193,8 @@ public class AirportRepository {
             }
             PendingAssignment pendingAssignment = new PendingAssignment(airline, flightQueue, requestModel.getAirlineName(), requestModel.getCountVal());
             pendingAssignments.add(pendingAssignment);
-            if (airline.isShouldNotify())
-                airline.notifyPendingAssignment(pendingAssignment, sector.getName(),amountPendingAhead);
+            // if (airline.isShouldNotify())
+            //     airline.notifyPendingAssignment(pendingAssignment, sector.getName(),amountPendingAhead);
             return responseModel;
         } else {
             CounterRange counterRange = new CounterRange(availableCounters, airlines.get(requestModel.getAirlineName()), flightQueue);
@@ -205,8 +205,8 @@ public class AirportRepository {
                 flight.setSectorName(sector.getName());
                 flight.setCounterRange(counterRange);
             }
-            if (airline.isShouldNotify())
-                airline.notifyAssignedRange(counterRange, sector.getName());
+            // if (airline.isShouldNotify())
+            //     airline.notifyAssignedRange(counterRange, sector.getName());
             return new CounterRangeAssignmentResponseModel(requestModel.getCountVal(), counterRange.getLastCounter().getNum()
                     , 0,0);
         }
@@ -233,6 +233,21 @@ public class AirportRepository {
         return counters;
     }
 
+    public ConcurrentLinkedQueue<PendingAssignment> getPendingAssignments(String sectorName) {
+        Sector sector = sectorMap.get(sectorName);
+        if (sector == null)
+            return new ConcurrentLinkedQueue<>();
+        return sector.getPendingAssignments();
+    }
+
+    public List<PendingAssignment> resolvePending(String sectorName) {
+        Sector sector = sectorMap.get(sectorName);
+        if (sector != null) {
+            return sector.resolvePending();
+        }
+        return new ArrayList<>();
+    }
+
     public FreeCounterRangeResponseModel freeCounterRange(FreeCounterRangeRequestModel requestModel) {
         if (!sectorMap.containsKey(requestModel.getSectorName()))
             throw new SectorDoesNotExistsException(requestModel.getSectorName());
@@ -254,9 +269,6 @@ public class AirportRepository {
             throw new StillCheckingInBookingsException();
 
         FreeCounterRangeResponseModel responseModel = counterRange.free();
-        if (airline.isShouldNotify())
-            airline.notifyFreeCounterRange(responseModel.getFlights(), requestModel.getFromVal(), responseModel.getFreedAmount(), sector.getName());
-        sector.resolvePending();
         return responseModel;
     }
 
@@ -310,9 +322,6 @@ public class AirportRepository {
                 booking.getCheckedInInfo().setSector(sector.getName());
                 booking.getCheckedInInfo().setCounter(counter.getNum());
                 checkedInBookings.add(booking);
-
-                if (airline.isShouldNotify())
-                    airline.notifyPassengerCheckIn(booking, i, sectorName);
             }
         }
         return bookingList;
@@ -337,15 +346,12 @@ public class AirportRepository {
         Airline airline = counter.getAirline();
         int peopleInLine = counter.addBookingToQueue(booking);
 
-        PassengerCheckInResponseModel responseModel = new PassengerCheckInResponseModel(
+        return new PassengerCheckInResponseModel(
                 counter.getLastInRange(),
                 new AtomicInteger(peopleInLine),
                 booking.getFlight().getCode(),
                 booking.getFlight().getAirline().getName()
         );
-        if (airline.isShouldNotify())
-            airline.notifyBookingInQueue(booking, peopleInLine,counter, requestModel.getSectorName());
-        return responseModel;
     }
 
     public PassengerStatusResponseModel passengerStatus(StringValue bookingCode) {
@@ -407,15 +413,14 @@ public class AirportRepository {
         return sectorMap.get(sectorNameString).getPendingAssignments();
     }
 
-    public void registerForNotifications(
-            String airlineName,
-            StreamObserver<NotifyServiceOuterClass.Notification> responseObserver
-    ) {
+    public void registerForNotifications(String airlineName) {
         Airline airline = airlines.get(airlineName);
         if (airline == null)
             throw new AirlineDoesNotExistException(airlineName);
-        airline.registerForNotifications(responseObserver);
-        airline.notifyRegistered();
+        if (airline.isShouldNotify())
+            throw new AirlineAlreadyRegisteredException(airlineName);
+
+        airline.registerForNotifications();
     }
 
     public StreamObserver<NotifyServiceOuterClass.Notification> unregisterForNotification(String airlineName) {

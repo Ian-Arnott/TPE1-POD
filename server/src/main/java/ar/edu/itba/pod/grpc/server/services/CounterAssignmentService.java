@@ -26,6 +26,11 @@ import java.util.Set;
 public class CounterAssignmentService extends CounterAssignmentServiceGrpc.CounterAssignmentServiceImplBase {
     private final static Logger logger = LoggerFactory.getLogger(CounterAssignmentService.class);
     private static final AirportRepository repository = AirportRepository.getInstance();
+    private final NotifyService notifyService;
+
+    public CounterAssignmentService() {
+        notifyService = new NotifyService();
+    }
 
     @Override
     public void listSectors(Empty request, StreamObserver<CounterAssignmentServiceOuterClass.ListSectorsResponse> responseObserver) {
@@ -71,6 +76,24 @@ public class CounterAssignmentService extends CounterAssignmentServiceGrpc.Count
         CounterRangeAssignmentRequestModel requestModel = CounterRangeAssignmentRequestModel.fromCounterRangAssignmentRequest(request);
 
         CounterRangeAssignmentResponseModel responseModel = repository.counterRangeAssignment(requestModel);
+
+        if (responseModel.getAmountPendingAhead() != 0) {
+            notifyService.notifyPendingAssignment(
+                    request.getAirlineName(),
+                    request.getCountVal(),
+                    request.getFlightList(),
+                    request.getSectorName(),
+                    responseModel.getAmountPendingAhead()
+            );
+        } else {
+            notifyService.notifyAssignedRange(
+                    request.getAirlineName(),
+                    request.getCountVal(),
+                    responseModel.getLastCheckingIn(),
+                    request.getFlightList(),
+                    request.getSectorName()
+            );
+        }
         responseObserver.onNext(CounterAssignmentServiceOuterClass.CounterRangeAssignmentResponse.newBuilder()
                 .setAmountCheckingIn(responseModel.getAmountCheckingIn())
                 .setAmountPending(responseModel.getAmountPending())
@@ -84,6 +107,12 @@ public class CounterAssignmentService extends CounterAssignmentServiceGrpc.Count
         FreeCounterRangeRequestModel requestModel = FreeCounterRangeRequestModel.fromFreeCounterRequest(request);
 
         FreeCounterRangeResponseModel responseModel = repository.freeCounterRange(requestModel);
+        List<PendingAssignment> pendingAssignments = repository.resolvePending(request.getSectorName());
+        notifyService.notifyPendingAssignments(pendingAssignments, request.getSectorName());
+
+
+        notifyService.notifyFreeCounterRange(request.getAirline(), responseModel.getFlights(), requestModel.getFromVal(), responseModel.getFreedAmount(), request.getSectorName());
+
         responseObserver.onNext(CounterAssignmentServiceOuterClass.FreeCounterRangeResponse.newBuilder()
                 .addAllFlights(responseModel.getFlights())
                 .setFreedAmount(responseModel.getFreedAmount().get()).build());
@@ -105,6 +134,7 @@ public class CounterAssignmentService extends CounterAssignmentServiceGrpc.Count
                         .setBooking(booking.getCode()).setFlight(booking.getFlight().getCode())
                         .setSuccessful(true)
                         .build());
+                notifyService.notifyPassengerCheckIn(booking, i, request.getSectorName());
             }
             i++;
         }

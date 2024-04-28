@@ -41,6 +41,8 @@ sh adminClient.sh -DserverAddress=127.0.0.0:50051 -Daction=addCounters -Dsector=
 
 sh adminClient.sh -DserverAddress=127.0.0.0:50051 -Daction=manifest -DinPath=../../manifest.csv
 
+$TERMINAL -e sh -c "sh eventsClient.sh -DserverAddress=127.0.0.0:50051 -Daction=register -Dairline=AmericanAirlines" &
+
 
 sh counterClient.sh -DserverAddress=127.0.0.0:50051 -Daction=assignCounters -Dsector=C -Dflights='AA123|AA124|AA125' -Dairline=AmericanAirlines -DcounterCount=2
 sh counterClient.sh -DserverAddress=127.0.0.0:50051 -Daction=listCounters -Dsector=C -DcounterFrom=2 -DcounterTo=8
@@ -56,6 +58,8 @@ sh passengerClient.sh -DserverAddress=127.0.0.0:50051 -Daction=passengerCheckin 
 sh passengerClient.sh -DserverAddress=127.0.0.0:50051 -Daction=passengerStatus -Dbooking=XYZ234
 sh passengerClient.sh -DserverAddress=127.0.0.0:50051 -Daction=passengerStatus -Dbooking=XYZ235
 sh passengerClient.sh -DserverAddress=127.0.0.0:50051 -Daction=passengerStatus -Dbooking=XYZ236
+
+sh eventsClient.sh -DserverAddress=127.0.0.0:50051 -Daction=register -Dairline=AmericanAirlines
 
 rm ../..query1.txt
 sh queryClient.sh -DserverAddress=127.0.0.0:50051 -Daction=queryCounters -DoutPath=../../query1.txt -Dsector=C
@@ -78,3 +82,4 @@ sh counterClient.sh -DserverAddress=127.0.0.0:50051 -Daction=listCounters -Dsect
 sh counterClient.sh -DserverAddress=127.0.0.0:50051 -Daction=listCounters -Dsector=C -DcounterFrom=1 -DcounterTo=1
 
 
+sh eventsClient.sh -DserverAddress=127.0.0.0:50051 -Daction=unregister -Dairline=AmericanAirlines
