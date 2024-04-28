@@ -1,8 +1,12 @@
 package ar.edu.itba.pod.grpc.server.models;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Counter {
     private final int num;
@@ -66,10 +70,16 @@ public class Counter {
         return counterRange.getQueueLength();
     }
 
-    public AtomicInteger getFirstInRange() {
-        if (counterRange == null) {
-            return new AtomicInteger(0);
+    public CounterRecord toRecord() {
+        Airline airline = getAirline();
+        if (airline == null) {
+            return new CounterRecord(num, "", new ArrayList<>(), 0);
         }
-        return new AtomicInteger(counterRange.getFirstCounter().getNum());
+        return new CounterRecord(num, airline.getName(), counterRange.getFlights().stream().map(Flight::getCode).toList(), counterRange.getQueueLength());
     }
+
+
+    public record CounterRecord(int counterCode, String airlineName, List<String> flightCodes, int peopleInLine) {
+    }
+
 }

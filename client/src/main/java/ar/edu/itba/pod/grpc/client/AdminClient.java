@@ -55,7 +55,7 @@ public class AdminClient {
                 AddSectorRequest addSectorRequest = AddSectorRequest.newBuilder()
                         .setSectorName(sectorName)
                         .build();
-                ListenableFuture<BoolValue> listenableFuture = stub.addSector(addSectorRequest);
+                ListenableFuture<Empty> listenableFuture = stub.addSector(addSectorRequest);
                 Futures.addCallback(listenableFuture, new AddSectorResponseFutureCallback(logger, latch, sectorName), Runnable::run);
             }
             case "addCounters" -> {

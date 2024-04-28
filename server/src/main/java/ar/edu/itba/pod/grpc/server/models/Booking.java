@@ -1,7 +1,9 @@
 package ar.edu.itba.pod.grpc.server.models;
 
 import ar.edu.itba.pod.grpc.server.models.response.CheckedInInfo;
+import jdk.dynalink.linker.LinkerServices;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Booking {
@@ -17,7 +19,7 @@ public class Booking {
         inQueue = new AtomicBoolean(false);
     }
 
-    public AtomicBoolean getCheckedIn() {
+    public boolean getCheckedIn() {
         return checkedInInfo.getCheckedIn();
     }
 
@@ -26,7 +28,7 @@ public class Booking {
     }
 
     public void checkIn() {
-        checkedInInfo.getCheckedIn().set(true);
+        checkedInInfo.setCheckedIn(true);
     }
 
 
@@ -45,4 +47,9 @@ public class Booking {
     public String getAirlineName() {
         return flight.getAirline().getName();
     }
+    public BookingRecord toRecord() {
+        return new BookingRecord(code, flight.getAirline().getName(), flight.getCode(), checkedInInfo.copy());
+    }
+
+    public record BookingRecord(String bookingCode, String airlineName, String flightCode, CheckedInInfo checkedInInfo) {}
 }
