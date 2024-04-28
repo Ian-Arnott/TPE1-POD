@@ -33,16 +33,6 @@ public class PendingAssignment {
         return airline;
     }
 
-    // public void notifyAssignedPending(CounterRange counterRange, String sectorName) {
-    //     if (airline.isShouldNotify())
-    //         airline.notifyAssignedRange(counterRange, sectorName);
-    // }
-
-    // public void notifyChange(AtomicInteger countVal, ConcurrentLinkedQueue<Flight> flightConcurrentLinkedQueue, AtomicInteger pos, String sectorName, int pendingAmount) {
-    //     if (airline.isShouldNotify())
-    //         airline.notifyPendingChange(countVal, flightConcurrentLinkedQueue, pos,sectorName,pendingAmount);
-    // }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

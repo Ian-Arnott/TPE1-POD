@@ -110,10 +110,10 @@ public class NotifyService extends NotifyServiceGrpc.NotifyServiceImplBase {
         notifyAirline(airlineName, notification);
     }
 
-    public void notifyPassengerCheckIn(Booking booking, int counterCode, String sectorName) {
+    public void notifyPassengerCheckIn(Booking.BookingRecord booking, int counterCode, String sectorName) {
         String notification = String.format("Check-in successful of %s for flight %s at counter %d in Sector %s",
-                booking.getCode(),booking.getFlight().getCode(), counterCode,sectorName);
-        notifyAirline(booking.getAirlineName(), notification);
+                booking.bookingCode(), booking.flightCode(), counterCode,sectorName);
+        notifyAirline(booking.airlineName(), notification);
     }
 
     public void notifyPendingAssignments(List<PendingAssignment> pendingAssignmentList, String sectorName) {

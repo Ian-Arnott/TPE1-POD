@@ -2,20 +2,29 @@ package ar.edu.itba.pod.grpc.server.models.response;
 
 import ar.edu.itba.pod.grpc.server.models.Counter;
 import ar.edu.itba.pod.grpc.server.models.Sector;
+import com.google.common.graph.AbstractNetwork;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CheckedInInfo {
-    private final AtomicBoolean checkedIn;
+    private boolean checkedIn;
     private String sector;
     private int counter;
 
     public CheckedInInfo() {
-        checkedIn = new AtomicBoolean(false);
+        checkedIn = false;
+    }
+    private CheckedInInfo(boolean checkedIn, String sectorName, int counter) {
+        this.checkedIn = checkedIn;
+        this.sector = sectorName;
+        this.counter = counter;
     }
 
-    public AtomicBoolean getCheckedIn() {
+    public synchronized boolean getCheckedIn() {
         return checkedIn;
+    }
+    public synchronized void setCheckedIn(boolean val) {
+        checkedIn = val;
     }
 
     public String getSector() {
@@ -32,5 +41,8 @@ public class CheckedInInfo {
 
     public void setCounter(int counter) {
         this.counter = counter;
+    }
+    public synchronized CheckedInInfo copy() {
+        return new CheckedInInfo(checkedIn, sector,  counter);
     }
 }

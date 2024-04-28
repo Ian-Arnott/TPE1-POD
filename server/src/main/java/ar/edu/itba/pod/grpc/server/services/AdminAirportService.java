@@ -4,6 +4,7 @@ import airport.AdminAirportServiceGrpc;
 import airport.AdminAirportServiceOuterClass.*;
 import ar.edu.itba.pod.grpc.server.models.PendingAssignment;
 import ar.edu.itba.pod.grpc.server.models.requests.ManifestRequestModel;
+import ar.edu.itba.pod.grpc.server.models.response.AddCountersResponseModel;
 import ar.edu.itba.pod.grpc.server.repository.AirportRepository;
 import com.google.protobuf.BoolValue;
 import com.google.protobuf.Empty;
@@ -23,21 +24,20 @@ public class AdminAirportService extends AdminAirportServiceGrpc.AdminAirportSer
     }
 
     @Override
-    public void addSector(AddSectorRequest request, StreamObserver<BoolValue> responseObserver) {
-        boolean response = repository.addSector(request.getSectorName());
-        responseObserver.onNext(BoolValue.of(response));
+    public void addSector(AddSectorRequest request, StreamObserver<Empty> responseObserver) {
+        repository.addSector(request.getSectorName());
+        responseObserver.onNext(Empty.getDefaultInstance());
         responseObserver.onCompleted();
     }
 
     @Override
     public void addCounters(AddCountersRequest request, StreamObserver<AddCountersResponse> responseObserver) {
-        int lastCounterAdded = repository.addCountersToSector(request.getSectorName(), request.getCounterCount());
-        List<PendingAssignment> pendingAssignments = repository.resolvePending(request.getSectorName());
-        notifyService.notifyPendingAssignments(pendingAssignments, request.getSectorName());
+        AddCountersResponseModel addCountersResponse = repository.addCountersToSector(request.getSectorName(), request.getCounterCount());
 
+        notifyService.notifyPendingAssignments(addCountersResponse.pendingAssignmentList(), request.getSectorName());
 
         responseObserver.onNext(
-            AddCountersResponse.newBuilder().setLastCounterAdded(lastCounterAdded).build()
+            AddCountersResponse.newBuilder().setLastCounterAdded(addCountersResponse.lastCounterAdded()).build()
         );
         responseObserver.onCompleted();
     }

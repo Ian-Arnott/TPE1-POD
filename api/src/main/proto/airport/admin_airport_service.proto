@@ -6,7 +6,7 @@ import "google/protobuf/empty.proto";
 package airport;
 
 service AdminAirportService {
-  rpc AddSector(AddSectorRequest) returns(google.protobuf.BoolValue);
+  rpc AddSector(AddSectorRequest) returns(google.protobuf.Empty);
   rpc AddCounters(AddCountersRequest) returns(AddCountersResponse);
   rpc Manifest(ManifestRequest) returns(google.protobuf.Empty);
 }

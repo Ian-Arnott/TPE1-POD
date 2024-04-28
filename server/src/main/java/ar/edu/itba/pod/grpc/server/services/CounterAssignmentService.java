@@ -53,15 +53,15 @@ public class CounterAssignmentService extends CounterAssignmentServiceGrpc.Count
 
     @Override
     public void listCounters(ListCountersRequest request, StreamObserver<ListCountersResponse> responseObserver) {
-        List<Counter> counters = repository.getCounters(request.getSectorName(), request.getFromVal(), request.getToVal());
+        List<Counter.CounterRecord> counters = repository.getCounters(request.getSectorName(), request.getFromVal(), request.getToVal());
         ListCountersResponse.Builder listCountersResonseBuilder = ListCountersResponse.newBuilder();
-        for (Counter counter : counters) {
-            ListCounterItem.Builder listCounterItem = ListCounterItem.newBuilder().setCounterNum(counter.getNum());
-            Airline airline = counter.getAirline();
-            if (airline != null) {
-                listCounterItem.setAirlineName(airline.getName())
-                        .addAllFlightCodes(counter.getFlights().stream().map(Flight::getCode).collect(Collectors.toList()))
-                        .setPeople(counter.getQueueLength());
+        for (Counter.CounterRecord counter : counters) {
+            ListCounterItem.Builder listCounterItem = ListCounterItem.newBuilder().setCounterNum(counter.counterCode());
+            String airlineName = counter.airlineName();
+            if (!airlineName.isEmpty()) {
+                listCounterItem.setAirlineName(airlineName)
+                        .addAllFlightCodes(counter.flightCodes())
+                        .setPeople(counter.peopleInLine());
             }
             listCountersResonseBuilder.addItems(
                     listCounterItem.build()
@@ -107,9 +107,8 @@ public class CounterAssignmentService extends CounterAssignmentServiceGrpc.Count
         FreeCounterRangeRequestModel requestModel = FreeCounterRangeRequestModel.fromFreeCounterRequest(request);
 
         FreeCounterRangeResponseModel responseModel = repository.freeCounterRange(requestModel);
-        List<PendingAssignment> pendingAssignments = repository.resolvePending(request.getSectorName());
-        notifyService.notifyPendingAssignments(pendingAssignments, request.getSectorName());
 
+        notifyService.notifyPendingAssignments(responseModel.getPendingAssignments(), request.getSectorName());
 
         notifyService.notifyFreeCounterRange(request.getAirline(), responseModel.getFlights(), requestModel.getFromVal(), responseModel.getFreedAmount(), request.getSectorName());
 
@@ -122,16 +121,16 @@ public class CounterAssignmentService extends CounterAssignmentServiceGrpc.Count
     @Override
     public void performCounterCheckIn(CounterAssignmentServiceOuterClass.PerformCounterCheckInRequest request, StreamObserver<CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse> responseObserver) {
         PerformCounterCheckInRequestModel requestModel = PerformCounterCheckInRequestModel.fromPerformCounterCheckInRequest(request);
-        List<Booking> bookingList = repository.performCounterCheckIn(requestModel.getSectorName(), request.getFromVal(), request.getAirlineName());
+        List<Booking.BookingRecord> bookingList = repository.performCounterCheckIn(requestModel.getSectorName(), request.getFromVal(), request.getAirlineName());
         int i = request.getFromVal();
-        for (Booking booking : bookingList) {
+        for (Booking.BookingRecord booking : bookingList) {
             if (booking == null) {
                 responseObserver.onNext(CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse.newBuilder()
                         .setSuccessful(false).setCounter(i).build());
             } else {
                 responseObserver.onNext(CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse.newBuilder()
                         .setCounter(i)
-                        .setBooking(booking.getCode()).setFlight(booking.getFlight().getCode())
+                        .setBooking(booking.bookingCode()).setFlight(booking.flightCode())
                         .setSuccessful(true)
                         .build());
                 notifyService.notifyPassengerCheckIn(booking, i, request.getSectorName());
