@@ -1,9 +1,7 @@
 package ar.edu.itba.pod.grpc.server.repository;
 
 import airport.NotifyServiceOuterClass;
-import airport.QueryServiceOuterClass;
 import ar.edu.itba.pod.grpc.server.exeptions.SectorMapIsEmptyException;
-import airport.CounterAssignmentServiceOuterClass;
 import ar.edu.itba.pod.grpc.server.exeptions.NonPositiveCounterException;
 import ar.edu.itba.pod.grpc.server.exeptions.SectorAlreadyExistsException;
 import ar.edu.itba.pod.grpc.server.exeptions.SectorDoesNotExistsException;
@@ -286,46 +284,38 @@ public class AirportRepository {
         );
     }
 
-    public synchronized void performCounterCheckIn(PerformCounterCheckInRequestModel requestModel, StreamObserver<CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse> responseObserver) {
-        Sector sector = sectorMap.get(requestModel.getSectorName());
-        if (!sectorMap.containsKey(requestModel.getSectorName()))
-            throw new SectorDoesNotExistsException(requestModel.getSectorName());
-        Counter counter = sector.getCounterMap().get(requestModel.getFromVal().get());
+    public synchronized List<Booking> performCounterCheckIn(String sectorName, int fromVal, String airlineName) {
+        Sector sector = sectorMap.get(sectorName);
+        if (sector == null)
+            throw new SectorDoesNotExistsException(sectorName);
+        Counter counter = sector.getCounterMap().get(fromVal);
 
         if (counter == null)
             throw new CountersAreNotAssignedException();
         if (!counter.getIsCheckingIn().get())
             throw new CountersAreNotAssignedException();
-        if (!counter.getCounterRange().getAirline().getName().equals(requestModel.getAirlineName()))
+        Airline airline = counter.getCounterRange().getAirline();
+        if (!airline.getName().equals(airlineName))
             throw new CounterIsCheckingInOtherAirlineException();
         if (!counter.getIsFirstInRange().get())
             throw new CounterIsNotFirstInRangeException();
 
         CounterRange counterRange = counter.getCounterRange();
-        Airline airline = counter.getAirline();
-        for (int i = requestModel.getFromVal().get(); i <= counter.getLastInRange().get(); i++) {
+        List<Booking> bookingList = new ArrayList<>();
+        for (int i = fromVal; i <= counter.getLastInRange().get(); i++) {
             Booking booking = counterRange.performCheckIn();
-            if (booking == null) {
-                responseObserver.onNext(CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse.newBuilder()
-                        .setSuccessful(false).setCounter(i).build());
-            } else {
+            bookingList.add(booking);
+            if (booking != null) {
                 booking.checkIn();
                 booking.getCheckedInInfo().setSector(sector.getName());
                 booking.getCheckedInInfo().setCounter(counter.getNum());
                 checkedInBookings.add(booking);
-                responseObserver.onNext(CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse.newBuilder()
-                        .setCounter(i)
-                        .setBooking(booking.getCode()).setFlight(booking.getFlight().getCode())
-                        .setSuccessful(true)
-                        .build());
+
                 if (airline.isShouldNotify())
-                    airline.notifyPassengerCheckIn(booking,i,sector.getName());
-            }
-            if (i == counter.getLastInRange().get()) {
-                responseObserver.onCompleted();
+                    airline.notifyPassengerCheckIn(booking, i, sectorName);
             }
         }
-
+        return bookingList;
     }
 
     public synchronized PassengerCheckInResponseModel passengerCheckIn(PassengerCheckInRequestModel requestModel) {
@@ -417,7 +407,10 @@ public class AirportRepository {
         return sectorMap.get(sectorNameString).getPendingAssignments();
     }
 
-    public void registerForNotifications(String airlineName, StreamObserver<NotifyServiceOuterClass.Notification> responseObserver) {
+    public void registerForNotifications(
+            String airlineName,
+            StreamObserver<NotifyServiceOuterClass.Notification> responseObserver
+    ) {
         Airline airline = airlines.get(airlineName);
         if (airline == null)
             throw new AirlineDoesNotExistException(airlineName);

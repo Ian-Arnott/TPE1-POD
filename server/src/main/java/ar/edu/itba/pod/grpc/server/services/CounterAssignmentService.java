@@ -2,11 +2,8 @@ package ar.edu.itba.pod.grpc.server.services;
 
 import airport.CounterAssignmentServiceGrpc;
 import airport.CounterAssignmentServiceOuterClass.*;
-import ar.edu.itba.pod.grpc.server.models.Airline;
-import ar.edu.itba.pod.grpc.server.models.Counter;
-import ar.edu.itba.pod.grpc.server.models.Flight;
+import ar.edu.itba.pod.grpc.server.models.*;
 import airport.CounterAssignmentServiceOuterClass;
-import ar.edu.itba.pod.grpc.server.models.PendingAssignment;
 import ar.edu.itba.pod.grpc.server.models.requests.CounterRangeAssignmentRequestModel;
 import ar.edu.itba.pod.grpc.server.models.requests.FreeCounterRangeRequestModel;
 import ar.edu.itba.pod.grpc.server.models.requests.PerformCounterCheckInRequestModel;
@@ -96,7 +93,22 @@ public class CounterAssignmentService extends CounterAssignmentServiceGrpc.Count
     @Override
     public void performCounterCheckIn(CounterAssignmentServiceOuterClass.PerformCounterCheckInRequest request, StreamObserver<CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse> responseObserver) {
         PerformCounterCheckInRequestModel requestModel = PerformCounterCheckInRequestModel.fromPerformCounterCheckInRequest(request);
-        repository.performCounterCheckIn(requestModel, responseObserver);
+        List<Booking> bookingList = repository.performCounterCheckIn(requestModel.getSectorName(), request.getFromVal(), request.getAirlineName());
+        int i = request.getFromVal();
+        for (Booking booking : bookingList) {
+            if (booking == null) {
+                responseObserver.onNext(CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse.newBuilder()
+                        .setSuccessful(false).setCounter(i).build());
+            } else {
+                responseObserver.onNext(CounterAssignmentServiceOuterClass.PerformCounterCheckInResponse.newBuilder()
+                        .setCounter(i)
+                        .setBooking(booking.getCode()).setFlight(booking.getFlight().getCode())
+                        .setSuccessful(true)
+                        .build());
+            }
+            i++;
+        }
+        responseObserver.onCompleted();
     }
 
     @Override
