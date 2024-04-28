@@ -20,6 +20,18 @@ message QueryCounterResponse {
   repeated QueryCounterItem queryList = 1;
 }
 
+message QueryCounterItem {
+  string sectorName = 1;
+  repeated CounterItem counters = 2;
+}
+
+message CounterItem {
+  int32 counterNum = 1;
+  string airlineName = 2;
+  repeated string flightCodes = 3;
+  int32 people = 4;
+}
+
 message QueryCheckInsResponse {
   repeated QueryCheckInItem queryList = 1;
 }
@@ -30,13 +42,4 @@ message QueryCheckInItem {
   string airlineName = 3;
   string flightCode = 4;
   string bookingCode = 5;
-}
-
-message QueryCounterItem {
-  string sectorName = 1;
-  int32 firstCounter = 2;
-  int32 lastCounter = 3;
-  string airlineName = 4;
-  repeated string flights = 5;
-  int32 people = 6;
 }

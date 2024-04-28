@@ -389,7 +389,7 @@ public class AirportRepository {
         return airline.unregisterForNotifications();
     }
 
-    public List<? extends QueryServiceOuterClass.QueryCounterItem> getCountersQuery(String sectorName) {
+    public Collection<Counter> getCountersQuery(String sectorName) {
         boolean isEmpty = true;
         for (Sector sector : sectorMap.values()) {
             if (!sector.getCounterMap().isEmpty()) {
@@ -399,49 +399,14 @@ public class AirportRepository {
         }
         if (isEmpty)
             throw new NoCountersAddedException();
-
-        List<QueryServiceOuterClass.QueryCounterItem> list = new ArrayList<>();
         if (!sectorMap.containsKey(sectorName)) {
-            return list;
+            return new ArrayList<>();
         }
-
-        int last = 0;
-        int contiguous = 0;
-        Map<Integer, Counter> counterMap = sectorMap.get(sectorName).getCounterMap();
-        QueryServiceOuterClass.QueryCounterItem.Builder item = QueryServiceOuterClass.QueryCounterItem.newBuilder();
-        for (Counter counter : sectorMap.get(sectorName).getCounterMap().values()) {
-            item.setSectorName(sectorName);
-            if (counter.getCounterRange() != null && counter.getNum() > last) {
-                item.setFirstCounter(counter.getFirstInRange().get())
-                        .setLastCounter(counter.getLastInRange().get())
-                        .setAirlineName(counter.getAirline().getName())
-                        .setPeople(counter.getQueueLength());
-                counter.getFlights().forEach( flight -> item.addFlights(flight.getCode()));
-                last = counter.getLastInRange().get();
-                list.add(item.build());
-                item.clear();
-            }
-            if (counter.getCounterRange() == null) {
-                if (contiguous == 0) {
-                    item.setFirstCounter(counter.getNum());
-                    contiguous = counter.getNum();
-                }
-                if (counter.getNum() > contiguous + 1 || !counterMap.containsKey(contiguous+1)) {
-                    item.setLastCounter(contiguous)
-                            .setAirlineName("-")
-                            .addFlights("-");
-                    list.add(item.build());
-                    item.clear();
-                    contiguous = (!counterMap.containsKey(contiguous+1)) ? 0 : counter.getNum();
-                }
-                else contiguous++;
-            }
-        }
-        return list;
+        return sectorMap.get(sectorName).getCounterMap().values();
     }
 
 
-    public List<Booking> getBookingsQuery(Optional<String> sectorName, Optional<String> airlineName) {
+    public List<Booking> getBookingsQuery(String sectorName, String airlineName) {
         if (checkedInBookings.isEmpty())
             throw new NoBookingsCheckedInException();
         List<Booking> bookingList = new ArrayList<>();
@@ -450,14 +415,14 @@ public class AirportRepository {
             return bookingList;
         }
         for  (Booking booking : checkedInBookings) {
-            if (sectorName.isPresent() && airlineName.isPresent())
-                if (booking.getAirlineName().equals(airlineName.get()) && booking.getCheckedInInfo().getSector().equals(sectorName.get()))
+            if (!sectorName.isEmpty() && !airlineName.isEmpty())
+                if (booking.getAirlineName().equals(airlineName) && booking.getCheckedInInfo().getSector().equals(sectorName))
                     bookingList.add(booking);
-            if (sectorName.isPresent() && airlineName.isEmpty())
-                if (booking.getCheckedInInfo().getSector().equals(sectorName.get()))
+            if (!sectorName.isEmpty() && !airlineName.isEmpty())
+                if (booking.getCheckedInInfo().getSector().equals(sectorName))
                     bookingList.add(booking);
             if (sectorName.isEmpty())
-                if (booking.getAirlineName().equals(airlineName.get()))
+                if (booking.getAirlineName().equals(airlineName))
                     bookingList.add(booking);
         }
         return bookingList;

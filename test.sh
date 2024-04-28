@@ -35,16 +35,33 @@ sh queryClient.sh -DserverAddress=127.0.0.0:50051 -Daction=queryCounters -DoutPa
 cat ../../query1.txt
 
 
-sh adminClient.sh -DserverAddress=127.0.0.0:50051 -Daction=addCounters -Dsector=C -Dcounters=10
-sh adminClient.sh -DserverAddress=127.0.0.0:50051 -Daction=addCounters -Dsector=B -Dcounters=3
-sh adminClient.sh -DserverAddress=127.0.0.0:50051 -Daction=addCounters -Dsector=C -Dcounters=10
+sh adminClient.sh -DserverAddress=127.0.0.0:50051 -Daction=addCounters -Dsector=C -Dcounters=3
+sh adminClient.sh -DserverAddress=127.0.0.0:50051 -Daction=addCounters -Dsector=B -Dcounters=2
+sh adminClient.sh -DserverAddress=127.0.0.0:50051 -Daction=addCounters -Dsector=C -Dcounters=2
 
 sh adminClient.sh -DserverAddress=127.0.0.0:50051 -Daction=manifest -DinPath=../../manifest.csv
 
 
-sh counterClient.sh -DserverAddress=127.0.0.0:50051 -Daction=assignCounters -Dsector=C -Dflights='AA123|AA124' -Dairline=AmericanAirlines -DcounterCount=3
+sh counterClient.sh -DserverAddress=127.0.0.0:50051 -Daction=assignCounters -Dsector=C -Dflights='AA123|AA124|AA125' -Dairline=AmericanAirlines -DcounterCount=2
 sh counterClient.sh -DserverAddress=127.0.0.0:50051 -Daction=listCounters -Dsector=C -DcounterFrom=2 -DcounterTo=8
 
+sh passengerClient.sh -DserverAddress=127.0.0.0:50051 -Daction=passengerStatus -Dbooking=XYZ234
+sh passengerClient.sh -DserverAddress=127.0.0.0:50051 -Daction=passengerStatus -Dbooking=XYZ235
+sh passengerClient.sh -DserverAddress=127.0.0.0:50051 -Daction=passengerStatus -Dbooking=XYZ236
+
+sh passengerClient.sh -DserverAddress=127.0.0.0:50051 -Daction=passengerCheckin -Dbooking=XYZ234 -Dsector=C -Dcounter=2
+sh passengerClient.sh -DserverAddress=127.0.0.0:50051 -Daction=passengerCheckin -Dbooking=XYZ235 -Dsector=C -Dcounter=2
+sh passengerClient.sh -DserverAddress=127.0.0.0:50051 -Daction=passengerCheckin -Dbooking=XYZ236 -Dsector=C -Dcounter=2
+
+sh passengerClient.sh -DserverAddress=127.0.0.0:50051 -Daction=passengerStatus -Dbooking=XYZ234
+sh passengerClient.sh -DserverAddress=127.0.0.0:50051 -Daction=passengerStatus -Dbooking=XYZ235
+sh passengerClient.sh -DserverAddress=127.0.0.0:50051 -Daction=passengerStatus -Dbooking=XYZ236
+
+
+rm ../..query1.txt
+sh queryClient.sh -DserverAddress=127.0.0.0:50051 -Daction=queryCounters -DoutPath=../../query1.txt -Dsector=C
+
+cat ../../query1.txt
 
 # sh counterClient.sh -DserverAddress=127.0.0.0:50051 -Daction=assignCounters -Dsector=C -Dflights='AA125' -Dairline=AmericanAirlines -DcounterCount=2
 
@@ -54,6 +71,3 @@ sh counterClient.sh -DserverAddress=127.0.0.0:50051 -Daction=listCounters -Dsect
 sh counterClient.sh -DserverAddress=127.0.0.0:50051 -Daction=listCounters -Dsector=C -DcounterFrom=1 -DcounterTo=1
 
 
-sh queryClient.sh -DserverAddress=127.0.0.0:50051 -Daction=queryCounters -DoutPath=../../query1.txt -Dsector=C
-
-cat ../../query1.txt
