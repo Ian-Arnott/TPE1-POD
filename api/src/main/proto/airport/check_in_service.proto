@@ -33,8 +33,12 @@ message PassengerCheckInResponse {
 }
 
 message PassengerStatusResponse {
-  string flight = 1;
-  string airline = 2;
-  int32 counter = 3;
-  string sectorName = 4;
+  bool isCheckingIn = 1;
+  bool isCheckedIn = 2;
+  string flightCode = 3;
+  string airlineName = 4;
+  int32 counterOfCheckIn = 5;
+  repeated int32 countersForCheckingIn = 6;
+  string sectorName = 7;
+  int32 peopleAmountInLine = 8;
 }

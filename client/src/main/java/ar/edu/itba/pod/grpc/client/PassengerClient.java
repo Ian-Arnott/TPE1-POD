@@ -80,6 +80,17 @@ public class PassengerClient {
                 Futures.addCallback(listenableFuture, new PassengerCheckinFutureCallback(logger, latch, booking,value, sectorName), Runnable::run);
             }
             case "passengerStatus" -> {
+                String bookingCode = argMap.get(ClientArgs.BOOKING.getValue());
+
+                latch = new CountDownLatch(1);
+
+                ListenableFuture<CheckInServiceOuterClass.PassengerStatusResponse> listenableFuture =
+                        stub.passengerStatus(StringValue.of(bookingCode));
+                Futures.addCallback(
+                        listenableFuture,
+                        new PassengerStatusResponseFutureCallback(logger, latch, bookingCode),
+                        Runnable::run
+                );
             }
         }
 

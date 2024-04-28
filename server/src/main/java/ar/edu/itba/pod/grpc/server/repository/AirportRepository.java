@@ -17,10 +17,7 @@ import ar.edu.itba.pod.grpc.server.models.Booking;
 import ar.edu.itba.pod.grpc.server.models.Counter;
 import ar.edu.itba.pod.grpc.server.models.Flight;
 import ar.edu.itba.pod.grpc.server.models.requests.*;
-import ar.edu.itba.pod.grpc.server.models.response.CounterRangeAssignmentResponseModel;
-import ar.edu.itba.pod.grpc.server.models.response.FetchCounterResponseModel;
-import ar.edu.itba.pod.grpc.server.models.response.FreeCounterRangeResponseModel;
-import ar.edu.itba.pod.grpc.server.models.response.PassengerCheckInResponseModel;
+import ar.edu.itba.pod.grpc.server.models.response.*;
 import com.google.protobuf.StringValue;
 import io.grpc.stub.StreamObserver;
 
@@ -280,17 +277,12 @@ public class AirportRepository {
                     booking.getFlight().getAirline().getName(), new ArrayList<>(), "", 0);
         }
 
-        AtomicInteger p = new AtomicInteger();
-        booking.getFlight().getBookings().forEach((code, b) -> {
-            if (b.getInQueue().get() && !b.getCheckedIn().get()) p.getAndIncrement();
-        });
-
         return new FetchCounterResponseModel(
                 booking.getFlight().getCode(),
                 booking.getFlight().getAirline().getName(),
                 booking.getFlight().getCounterRange().getCounters(),
                 booking.getFlight().getSectorName(),
-                p.get()
+                booking.getFlight().getCounterRange().getQueueLength()
         );
     }
 
@@ -364,6 +356,57 @@ public class AirportRepository {
         if (airline.isShouldNotify())
             airline.notifyBookingInQueue(booking, peopleInLine,counter, requestModel.getSectorName());
         return responseModel;
+    }
+
+    public PassengerStatusResponseModel passengerStatus(StringValue bookingCode) {
+        String bookingCodeString = bookingCode.getValue();
+
+        if (!bookingConcurrentMap.containsKey(bookingCodeString)) {
+            throw new BookingDoesNotExistException(bookingCodeString);
+        }
+
+        Booking booking = bookingConcurrentMap.get(bookingCodeString);
+
+        if (booking.getFlight().getCounterRange() == null) {
+            throw new CountersAreNotAssignedException();
+        }
+
+        if (booking.getCheckedIn().get()) {
+            return new PassengerStatusResponseModel(
+                    true,
+                    true,
+                    booking.getFlight().getCode(),
+                    booking.getAirlineName(),
+                    booking.getCheckedInInfo().getCounter(),
+                    new ArrayList<>(),
+                    booking.getFlight().getSectorName(),
+                    0
+            );
+        }
+
+        if (booking.getInQueue().get()) {
+            return new PassengerStatusResponseModel(
+                    true,
+                    false,
+                    booking.getFlight().getCode(),
+                    booking.getAirlineName(),
+                    0,
+                    booking.getFlight().getCounterRange().getCounters(),
+                    booking.getFlight().getSectorName(),
+                    booking.getFlight().getCounterRange().getQueueLength()
+            );
+        }
+
+        return new PassengerStatusResponseModel(
+                false,
+                false,
+                booking.getFlight().getCode(),
+                booking.getAirlineName(),
+                0,
+                booking.getFlight().getCounterRange().getCounters(),
+                booking.getFlight().getSectorName(),
+                0
+        );
     }
 
     public ConcurrentLinkedQueue<PendingAssignment> listPendingAssignments(StringValue sectorName) {
