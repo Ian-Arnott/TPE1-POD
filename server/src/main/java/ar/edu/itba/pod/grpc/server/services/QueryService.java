@@ -1,18 +1,9 @@
 package ar.edu.itba.pod.grpc.server.services;
 
-import airport.AdminAirportServiceGrpc;
-import airport.AdminAirportServiceOuterClass.AddCountersRequest;
-import airport.AdminAirportServiceOuterClass.AddCountersResponse;
-import airport.AdminAirportServiceOuterClass.AddSectorRequest;
-import airport.AdminAirportServiceOuterClass.ManifestRequest;
 import airport.QueryServiceGrpc;
 import airport.QueryServiceOuterClass;
 import ar.edu.itba.pod.grpc.server.models.Booking;
-import ar.edu.itba.pod.grpc.server.models.Sector;
-import ar.edu.itba.pod.grpc.server.models.requests.ManifestRequestModel;
 import ar.edu.itba.pod.grpc.server.repository.AirportRepository;
-import com.google.protobuf.BoolValue;
-import com.google.protobuf.Empty;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,10 +37,10 @@ public class QueryService extends QueryServiceGrpc.QueryServiceImplBase {
         List<QueryServiceOuterClass.QueryCheckInItem> list = new ArrayList<>();
         QueryServiceOuterClass.QueryCheckInItem.Builder item = QueryServiceOuterClass.QueryCheckInItem.newBuilder();
         for (Booking booking : bookingList) {
-            item.setSectorName(booking.getCheckedInInfo().getSector().getName())
+            item.setSectorName(booking.getCheckedInInfo().getSector())
                     .setAirlineName(booking.getFlight().getAirline().getName())
                     .setFlightCode(booking.getFlight().getCode())
-                    .setCounter(booking.getCheckedInInfo().getCounter().getNum())
+                    .setCounter(booking.getCheckedInInfo().getCounter())
                     .setBookingCode(booking.getCode());
             list.add(item.build());
             item.clear();
