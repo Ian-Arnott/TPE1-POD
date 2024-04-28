@@ -8,6 +8,7 @@ import ar.edu.itba.pod.grpc.server.models.PendingAssignment;
 import ar.edu.itba.pod.grpc.server.models.requests.PassengerCheckInRequestModel;
 import ar.edu.itba.pod.grpc.server.models.response.FetchCounterResponseModel;
 import ar.edu.itba.pod.grpc.server.models.response.PassengerCheckInResponseModel;
+import ar.edu.itba.pod.grpc.server.models.response.PassengerStatusResponseModel;
 import ar.edu.itba.pod.grpc.server.repository.AirportRepository;
 import com.google.protobuf.StringValue;
 import io.grpc.stub.StreamObserver;
@@ -48,6 +49,27 @@ public class CheckInService extends CheckInServiceGrpc.CheckInServiceImplBase {
                 setAirline(responseModel.getAirline()).
                 setFlight(responseModel.getFlight())
                 .setLastCounter(responseModel.getLastCounter().get()).setPeopleInLIne(responseModel.getPeopleInLine().get()).build());
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void passengerStatus(StringValue request, StreamObserver<CheckInServiceOuterClass.PassengerStatusResponse> responseObserver) {
+        PassengerStatusResponseModel res = repository.passengerStatus(request);
+
+        CheckInServiceOuterClass.PassengerStatusResponse passengerStatusResponse =
+                CheckInServiceOuterClass.PassengerStatusResponse.newBuilder()
+                        .setIsCheckingIn(res.isCheckingIn())
+                        .setIsCheckedIn(res.isCheckedIn())
+                        .setFlightCode(res.getFlightCode())
+                        .setAirlineName(res.getAirlineName())
+                        .setCounterOfCheckIn(res.getCounterOfCheckIn())
+                        .addAllCountersForCheckingIn(res.getCountersForCheckingIn())
+                        .setSectorName(res.getSectorName())
+                        .setPeopleAmountInLine(res.getPeopleAmountInLine())
+                        .build();
+
+        logger.info("SERVER - The passengerStatus action is finished.");
+        responseObserver.onNext(passengerStatusResponse);
         responseObserver.onCompleted();
     }
 }
