@@ -2,6 +2,7 @@ package ar.edu.itba.pod.grpc.server;
 
 import ar.edu.itba.pod.grpc.server.exeptions.*;
 import ar.edu.itba.pod.grpc.server.models.requests.CounterRangeAssignmentRequestModel;
+import ar.edu.itba.pod.grpc.server.models.requests.FreeCounterRangeRequestModel;
 import ar.edu.itba.pod.grpc.server.models.requests.ManifestRequestModel;
 import ar.edu.itba.pod.grpc.server.models.requests.PassengerCheckInRequestModel;
 import ar.edu.itba.pod.grpc.server.models.response.AddCountersResponseModel;
@@ -74,15 +75,15 @@ class AirportRepositoryTest {
     }
 
     @Test
-    void registerAirlineTest() {
+    void freeCounterRangeTest() {
         instance.addSector("C");
-        instance.addCountersToSector("C", 3);
         instance.manifest(new ManifestRequestModel("ABC124", "AC987", "AirCanada"));
+        instance.addCountersToSector("C", 3);
 
+        instance.counterRangeAssignment(new CounterRangeAssignmentRequestModel(1, "C", "AC987".lines().toList(),"AirCanada"));
         Assertions.assertDoesNotThrow(
-                () -> instance.registerForNotifications("AirCanada")
+                ()->instance.freeCounterRange(new FreeCounterRangeRequestModel("C",1,"AirCanada"))
         );
-
     }
 
     @Test
