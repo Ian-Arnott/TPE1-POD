@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
@@ -77,28 +76,28 @@ public class CounterAssignmentService extends CounterAssignmentServiceGrpc.Count
 
         CounterRangeAssignmentResponseModel responseModel = repository.counterRangeAssignment(requestModel);
 
-        if (responseModel.getAmountPendingAhead() != 0) {
+        if (responseModel.isPending()) {
             notifyService.notifyPendingAssignment(
                     request.getAirlineName(),
                     request.getCountVal(),
                     request.getFlightList(),
                     request.getSectorName(),
-                    responseModel.getAmountPendingAhead()
+                    responseModel.amountPendingAhead()
             );
         } else {
             notifyService.notifyAssignedRange(
                     request.getAirlineName(),
                     request.getCountVal(),
-                    responseModel.getLastCheckingIn(),
+                    responseModel.lastCheckingIn(),
                     request.getFlightList(),
                     request.getSectorName()
             );
         }
         responseObserver.onNext(CounterAssignmentServiceOuterClass.CounterRangeAssignmentResponse.newBuilder()
-                .setAmountCheckingIn(responseModel.getAmountCheckingIn())
-                .setAmountPending(responseModel.getAmountPending())
-                .setLastCheckingIn(responseModel.getLastCheckingIn())
-                .setAmountPendingAhead(responseModel.getAmountPendingAhead()).build());
+                .setAmountCheckingIn(responseModel.amountCheckingIn())
+                .setAmountPending(responseModel.amountPending())
+                .setLastCheckingIn(responseModel.lastCheckingIn())
+                .setAmountPendingAhead(responseModel.amountPendingAhead()).build());
         responseObserver.onCompleted();
     }
 
@@ -148,7 +147,7 @@ public class CounterAssignmentService extends CounterAssignmentServiceGrpc.Count
         res.forEach((pendingAssignment) -> listPendingAssignmentsRes.add(CounterAssignmentServiceOuterClass.ListPendingAssignmentsItem
                 .newBuilder()
                 .setCountersAmount(pendingAssignment.getCountVal().get())
-                .setAirlineName(pendingAssignment.getAirlineName())
+                .setAirlineName(pendingAssignment.getAirline().getName())
                 .addAllFlights(pendingAssignment.getFlights().stream().map(Flight::getCode).toList())
                 .build()));
 

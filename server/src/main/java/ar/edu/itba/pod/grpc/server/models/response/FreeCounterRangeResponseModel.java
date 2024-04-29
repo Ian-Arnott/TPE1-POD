@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class FreeCounterRangeResponseModel {
     private final AtomicInteger freedAmount;
     private final ConcurrentLinkedQueue<String> flights;
-    private List<PendingAssignment> pendingAssignments;
+    private List<PendingAssignment.PendingAssignmentRecord> pendingAssignments;
 
     public FreeCounterRangeResponseModel() {
         freedAmount = new AtomicInteger(0);
@@ -27,11 +27,11 @@ public class FreeCounterRangeResponseModel {
         return flights;
     }
 
-    public List<PendingAssignment> getPendingAssignments() {
+    public List<PendingAssignment.PendingAssignmentRecord> getPendingAssignments() {
         return pendingAssignments;
     }
 
-    public void setPendingAssignments(List<PendingAssignment> pendingAssignments) {
+    public void setPendingAssignments(List<PendingAssignment.PendingAssignmentRecord> pendingAssignments) {
         this.pendingAssignments = pendingAssignments;
     }
 }
