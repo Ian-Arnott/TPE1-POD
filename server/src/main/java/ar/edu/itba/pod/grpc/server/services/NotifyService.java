@@ -40,7 +40,6 @@ public class NotifyService extends NotifyServiceGrpc.NotifyServiceImplBase {
 
     private void notifyAirline(String airline, String message){
         synchronized (lock) {
-            System.out.println(airline + " sending: " + message);
             StreamObserver<NotifyServiceOuterClass.Notification> streamObserver = streamObserverMap.get(airline);
             if (streamObserver != null)
                 try {
