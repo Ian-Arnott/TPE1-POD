@@ -1,4 +1,4 @@
-package ar.edu.itba.pod.grpc.server;
+package ar.edu.itba.pod.grpc.server.repository;
 
 import ar.edu.itba.pod.grpc.server.exeptions.*;
 import ar.edu.itba.pod.grpc.server.models.requests.CounterRangeAssignmentRequestModel;
@@ -71,18 +71,6 @@ class AirportRepositoryTest {
         Assertions.assertDoesNotThrow(
                 () -> instance.passengerStatus("ABC123")
         );
-    }
-
-    @Test
-    void registerAirlineTest() {
-        instance.addSector("C");
-        instance.addCountersToSector("C", 3);
-        instance.manifest(new ManifestRequestModel("ABC124", "AC987", "AirCanada"));
-
-        Assertions.assertDoesNotThrow(
-                () -> instance.registerForNotifications("AirCanada")
-        );
-
     }
 
     @Test

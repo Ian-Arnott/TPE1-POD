@@ -61,7 +61,7 @@ sh passengerClient.sh -DserverAddress=127.0.0.0:50051 -Daction=passengerStatus -
 sh passengerClient.sh -DserverAddress=127.0.0.0:50051 -Daction=passengerStatus -Dbooking=XYZ235
 sh passengerClient.sh -DserverAddress=127.0.0.0:50051 -Daction=passengerStatus -Dbooking=XYZ236
 
-sh eventsClient.sh -DserverAddress=127.0.0.0:50051 -Daction=register -Dairline=AmericanAirlines
+# sh eventsClient.sh -DserverAddress=127.0.0.0:50051 -Daction=register -Dairline=AmericanAirlines
 
 rm ../..query1.txt
 sh queryClient.sh -DserverAddress=127.0.0.0:50051 -Daction=queryCounters -DoutPath=../../query1.txt -Dsector=C

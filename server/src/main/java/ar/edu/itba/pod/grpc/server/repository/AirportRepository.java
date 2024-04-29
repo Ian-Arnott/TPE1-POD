@@ -36,7 +36,7 @@ public class AirportRepository {
 
     private int lastCounterAdded;
 
-    public AirportRepository() {
+    AirportRepository() {
         sectorMap = new ConcurrentHashMap<>();
 
         this.airlines = new ConcurrentHashMap<>();
@@ -45,11 +45,6 @@ public class AirportRepository {
 
         lastCounterAdded = 1;
         checkedInBookings = new ConcurrentLinkedQueue<>();
-    }
-
-
-    public synchronized Set<String> getSectorNames() {
-        return sectorMap.keySet();
     }
 
     public synchronized static AirportRepository getInstance() {
@@ -234,14 +229,6 @@ public class AirportRepository {
         }
         return counters;
     }
-
-    public synchronized ConcurrentLinkedQueue<PendingAssignment> getPendingAssignments(String sectorName) {
-        Sector sector = sectorMap.get(sectorName);
-        if (sector == null)
-            return new ConcurrentLinkedQueue<>();
-        return sector.getPendingAssignments();
-    }
-
 
     public synchronized FreeCounterRangeResponseModel freeCounterRange(FreeCounterRangeRequestModel requestModel) {
         if (!sectorMap.containsKey(requestModel.getSectorName()))
@@ -441,8 +428,6 @@ public class AirportRepository {
         }
         return counterQueryResponses;
     }
-
-
     public synchronized List<Booking.BookingRecord> getBookingsQuery(String sectorName, String airlineName) {
         if (checkedInBookings.isEmpty())
             throw new NoBookingsCheckedInException();
