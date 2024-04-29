@@ -11,7 +11,6 @@ public class Flight {
     private final String code;
     private final Airline airline;
     private final ConcurrentHashMap<String, Booking> bookings;
-
     private final AtomicBoolean checkedIn;
     private final AtomicBoolean checkingIn;
     private final AtomicBoolean pending;

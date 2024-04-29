@@ -33,7 +33,6 @@ public class AirportRepository {
     private final ConcurrentMap<String, Booking> bookingConcurrentMap;
     private final ConcurrentLinkedQueue<Booking> checkedInBookings;
     private final ConcurrentMap<String, Sector> sectorMap;
-    private final String counterLock = "counter lock";
 
     private int lastCounterAdded;
 
@@ -46,11 +45,6 @@ public class AirportRepository {
 
         lastCounterAdded = 1;
         checkedInBookings = new ConcurrentLinkedQueue<>();
-    }
-
-
-    public synchronized Set<String> getSectorNames() {
-        return sectorMap.keySet();
     }
 
     public synchronized static AirportRepository getInstance() {
@@ -79,7 +73,7 @@ public class AirportRepository {
         sector.addCounters(lastCounterAdded, counterAmount);
         lastCounterAdded += counterAmount;
 
-        List<PendingAssignment> list = sector.resolvePending();
+        List<PendingAssignment.PendingAssignmentRecord> list = sector.resolvePending();
         return new AddCountersResponseModel(lastCounterAdded, list);
     }
 
@@ -180,12 +174,20 @@ public class AirportRepository {
             ConcurrentLinkedQueue<PendingAssignment> pendingAssignments = sector.getPendingAssignments();
             int amountPendingAhead = pendingAssignments.size();
             CounterRangeAssignmentResponseModel responseModel = new CounterRangeAssignmentResponseModel(
-                    0,0,requestModel.getCountVal(),
-                    amountPendingAhead);
+                    0,
+                    0,
+                    requestModel.getCountVal(),
+                    amountPendingAhead,
+                    true
+            );
             for (Flight flight : flightQueue) {
                 flight.getPending().set(true);
             }
-            PendingAssignment pendingAssignment = new PendingAssignment(airline, flightQueue, requestModel.getAirlineName(), requestModel.getCountVal());
+            PendingAssignment pendingAssignment = new PendingAssignment(
+                    airline,
+                    flightQueue,
+                    requestModel.getCountVal()
+            );
             pendingAssignments.add(pendingAssignment);
             return responseModel;
         } else {
@@ -197,8 +199,13 @@ public class AirportRepository {
                 flight.setSectorName(sector.getName());
                 flight.setCounterRange(counterRange);
             }
-            return new CounterRangeAssignmentResponseModel(requestModel.getCountVal(), counterRange.getLastCounter().getNum()
-                    , 0,0);
+            return new CounterRangeAssignmentResponseModel(
+                    requestModel.getCountVal(),
+                    counterRange.getLastCounter().getNum(),
+                    0,
+                    0,
+                    false
+            );
         }
     }
 
@@ -222,14 +229,6 @@ public class AirportRepository {
         }
         return counters;
     }
-
-    public synchronized ConcurrentLinkedQueue<PendingAssignment> getPendingAssignments(String sectorName) {
-        Sector sector = sectorMap.get(sectorName);
-        if (sector == null)
-            return new ConcurrentLinkedQueue<>();
-        return sector.getPendingAssignments();
-    }
-
 
     public synchronized FreeCounterRangeResponseModel freeCounterRange(FreeCounterRangeRequestModel requestModel) {
         if (!sectorMap.containsKey(requestModel.getSectorName()))
@@ -396,16 +395,11 @@ public class AirportRepository {
         return sectorMap.get(sectorNameString).getPendingAssignments();
     }
 
-    public void registerForNotifications(String airlineName) {
+    public synchronized void registerForNotifications(String airlineName) {
         Airline airline = airlines.get(airlineName);
         if (airline == null)
             throw new AirlineDoesNotExistException(airlineName);
-        if (airline.isShouldNotify())
-            throw new AirlineAlreadyRegisteredException(airlineName);
-
-        airline.registerForNotifications();
     }
-
 
     public synchronized List<CounterQueryResponse> getCountersQuery(String sectorName) {
         boolean isEmpty = true;
@@ -434,8 +428,6 @@ public class AirportRepository {
         }
         return counterQueryResponses;
     }
-
-
     public synchronized List<Booking.BookingRecord> getBookingsQuery(String sectorName, String airlineName) {
         if (checkedInBookings.isEmpty())
             throw new NoBookingsCheckedInException();

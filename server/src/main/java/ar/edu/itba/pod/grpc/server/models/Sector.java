@@ -37,8 +37,8 @@ public class Sector {
         return counterMap;
     }
 
-    public synchronized List<PendingAssignment> resolvePending() {
-        List<PendingAssignment> list = new ArrayList<>();
+    public synchronized List<PendingAssignment.PendingAssignmentRecord> resolvePending() {
+        List<PendingAssignment.PendingAssignmentRecord> list = new ArrayList<>();
         if (!pendingAssignments.isEmpty()) {
             AtomicReference<List<Counter>> counters = new AtomicReference<>();
             AtomicInteger countVal = new AtomicInteger();
@@ -55,25 +55,16 @@ public class Sector {
                         flight.setSectorName(name);
                         flight.setCounterRange(counterRange);
                     }
-                    list.add(pendingAssignment);
-                    // pendingAssignment.notifyAssignedPending(counterRange, name);
+                    list.add(pendingAssignment.toRecord(false, counterRange.getFirstCounter().getNum()));
                     pendingAssignments.remove(pendingAssignment);
                     pendingsChanged.set(true);
+                } else {
+                    list.add(pendingAssignment.toRecord(true, 0));
                 }
             });
-            // if (pendingsChanged.get())
-            //     notifyChangedPending();
         }
         return list;
     }
-
-    // private void notifyChangedPending() {
-    //     AtomicInteger pos = new AtomicInteger(1);
-    //     int pendingAmount = pendingAssignments.size();
-    //     pendingAssignments.forEach(pendingAssignment -> {
-    //         pendingAssignment.notifyChange(pendingAssignment.getCountVal(),pendingAssignment.getFlights(),pos, name, pendingAmount);
-    //     });
-    // }
 
     public List<Counter> getAvailableCounters(int countVal, Map<Integer, Counter> counterMap) {
         List<Counter> availableCounters = new ArrayList<>();

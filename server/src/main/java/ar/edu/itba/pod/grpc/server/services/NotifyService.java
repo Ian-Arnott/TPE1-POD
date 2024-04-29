@@ -3,22 +3,24 @@ package ar.edu.itba.pod.grpc.server.services;
 import airport.Models;
 import airport.NotifyServiceGrpc;
 import airport.NotifyServiceOuterClass;
+import ar.edu.itba.pod.grpc.server.exeptions.AirlineAlreadyRegisteredException;
 import ar.edu.itba.pod.grpc.server.exeptions.AirlineNotRegisteredForNotificationsException;
 import ar.edu.itba.pod.grpc.server.models.*;
 import ar.edu.itba.pod.grpc.server.repository.AirportRepository;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class NotifyService extends NotifyServiceGrpc.NotifyServiceImplBase {
     private final static Logger logger = LoggerFactory.getLogger(NotifyService.class);
-    private final static ConcurrentMap<String, StreamObserver<NotifyServiceOuterClass.Notification>> streamObserverConcurrentMap = new ConcurrentHashMap<>();
+    private final static Map<String, StreamObserver<NotifyServiceOuterClass.Notification>> streamObserverMap = new HashMap<>();
     private final static String lock = "lock";
     private final AirportRepository repository;
     public NotifyService() {
@@ -28,17 +30,24 @@ public class NotifyService extends NotifyServiceGrpc.NotifyServiceImplBase {
     @Override
     public void notifyAirline(NotifyServiceOuterClass.NotifyRequest request, StreamObserver<NotifyServiceOuterClass.Notification> responseObserver) {
         synchronized (lock) {
+            if (streamObserverMap.get(request.getAirlineName()) != null)
+                throw new AirlineAlreadyRegisteredException(request.getAirlineName());
             repository.registerForNotifications(request.getAirlineName());
-            streamObserverConcurrentMap.put(request.getAirlineName(), responseObserver);
+            streamObserverMap.put(request.getAirlineName(), responseObserver);
         }
         notifyAirline(request.getAirlineName(), request.getAirlineName() + " registered successfully for check-in events.");
     }
 
     private void notifyAirline(String airline, String message){
         synchronized (lock) {
-            StreamObserver<NotifyServiceOuterClass.Notification> streamObserver = streamObserverConcurrentMap.get(airline);
+            System.out.println(airline + " sending: " + message);
+            StreamObserver<NotifyServiceOuterClass.Notification> streamObserver = streamObserverMap.get(airline);
             if (streamObserver != null)
-                streamObserver.onNext(NotifyServiceOuterClass.Notification.newBuilder().setMessage(message).build());
+                try {
+                    streamObserver.onNext(NotifyServiceOuterClass.Notification.newBuilder().setMessage(message).build());
+                } catch (StatusRuntimeException e) {
+                    streamObserverMap.put(airline, null);
+                }
         }
     }
 
@@ -78,17 +87,6 @@ public class NotifyService extends NotifyServiceGrpc.NotifyServiceImplBase {
         );
         notifyAirline(airlineName, notificationMessage);
     }
-    public void notifyAssignedRange(Airline airline, CounterRange counterRange, String sectorName) {
-        String notificationMessage = String.format("%d counters (%d-%d) in Sector %s are now checking in passengers from %s %s flights.",
-                counterRange.getCounterCount(),
-                counterRange.getFirstCounter().getNum(),
-                counterRange.getLastCounter().getNum(),
-                sectorName,
-                airline.getName(),
-                getFlightCodes(counterRange.getFlights()));
-        notifyAirline(airline.getName(), notificationMessage);
-    }
-
     public void notifyBookingInQueue(
             String airlineName,
             String bookingCode,
@@ -116,19 +114,26 @@ public class NotifyService extends NotifyServiceGrpc.NotifyServiceImplBase {
         notifyAirline(booking.airlineName(), notification);
     }
 
-    public void notifyPendingAssignments(List<PendingAssignment> pendingAssignmentList, String sectorName) {
-        for (PendingAssignment pendingAssignment : pendingAssignmentList) {
-            Flight flight = pendingAssignment.getFlights().peek();
-            if (flight != null)
-                notifyAssignedRange(pendingAssignment.getAirline(), flight.getCounterRange(), sectorName);
-        }
-
-        if (!pendingAssignmentList.isEmpty()) {
-            AtomicInteger pos = new AtomicInteger(1);
-            ConcurrentLinkedQueue<PendingAssignment> list = repository.getPendingAssignments(sectorName);
-            list.forEach(pendingAssignment -> {
-                notifyPendingChange(pendingAssignment.getAirline(), pendingAssignment.getCountVal(), pendingAssignment.getFlights(), pos, sectorName, list.size());
-            });
+    public void notifyPendingAssignments(List<PendingAssignment.PendingAssignmentRecord> pendingAssignmentList, String sectorName) {
+        int i = 1;
+        for (PendingAssignment.PendingAssignmentRecord pendingAssignment : pendingAssignmentList) {
+            if (!pendingAssignment.isPending()) {
+                notifyAssignedRange(
+                        pendingAssignment.airlineName(),
+                        pendingAssignment.counterCount(),
+                        pendingAssignment.firstCounter(),
+                        pendingAssignment.flightCodes(),
+                        sectorName
+                );
+            } else {
+                notifyPendingChange(
+                        pendingAssignment.airlineName(),
+                        sectorName,
+                        pendingAssignment.counterCount(),
+                        pendingAssignment.flightCodes(),
+                        i++
+                );
+            }
         }
     }
     public void notifyPendingAssignment(String airlineName, int countVal, List<String> flightCodes, String sectorName, int pendingsAhead) {
@@ -148,20 +153,21 @@ public class NotifyService extends NotifyServiceGrpc.NotifyServiceImplBase {
         notifyAirline(airlineName, notification);
     }
 
-    public void notifyPendingChange(Airline airline, AtomicInteger countVal, ConcurrentLinkedQueue<Flight> flightConcurrentLinkedQueue, AtomicInteger pos, String sectorName, int pendingAmount) {
-        String notification = String.format("%d counters for flights %s is pending with %d other pendings ahead",
-                countVal.get(),getFlightCodes(flightConcurrentLinkedQueue), pendingAmount - pos.get());
-        notifyAirline(airline.getName(), notification);
+    public void notifyPendingChange(String airline, String sectorName, int countVal, List<String> flightConcurrentLinkedQueue, int pos) {
+        String notification = String.format("%d counters in Sector %s for flights %s is pending with %d other pendings ahead",
+                countVal, sectorName, getFlightCodes(flightConcurrentLinkedQueue), pos);
+        notifyAirline(airline, notification);
     }
 
     @Override
     public void notifyRemoveAirline(NotifyServiceOuterClass.NotifyRequest request, StreamObserver<NotifyServiceOuterClass.NotificationResponse> responseObserver) {
         synchronized (lock) {
-            StreamObserver<NotifyServiceOuterClass.Notification> streamObserver = streamObserverConcurrentMap.get(request.getAirlineName());
+            StreamObserver<NotifyServiceOuterClass.Notification> streamObserver = streamObserverMap.get(request.getAirlineName());
             if (streamObserver == null) {
                 throw new AirlineNotRegisteredForNotificationsException(request.getAirlineName());
             }
             streamObserver.onCompleted();
+            streamObserverMap.put(request.getAirlineName(), null);
         }
         responseObserver.onNext(NotifyServiceOuterClass.NotificationResponse.newBuilder().setResponse(Models.SimpleStatusResponse.OK).build());
         responseObserver.onCompleted();
