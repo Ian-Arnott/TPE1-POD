@@ -100,6 +100,29 @@ class AirportRepositoryTest {
         Assertions.assertEquals(resList, instance.getCounters("C", 2, 5));
     }
     @Test
+    void assignCountersTest() {
+        instance.addSector("B");
+        instance.addCountersToSector("B", 2);
+        instance.addSector("C");
+        instance.addCountersToSector("C", 2);
+        instance.manifest(new ManifestRequestModel("XYZ234", "AA123", "AmericanAirlines"));
+        instance.manifest(new ManifestRequestModel("XYZ235", "AA124", "AmericanAirlines"));
+        instance.manifest(new ManifestRequestModel("XYZ236", "AA125", "AmericanAirlines"));
+        instance.manifest(new ManifestRequestModel("XYZ237", "AA123", "AmericanAirlines"));
+        instance.manifest(new ManifestRequestModel("XYZ238", "AA124", "AmericanAirlines"));
+        instance.manifest(new ManifestRequestModel("XYZ239", "AA125", "AmericanAirlines"));
+        instance.manifest(new ManifestRequestModel("ABC123", "AC987", "AirCanada"));
+
+        Assertions.assertThrows(SectorDoesNotExistsException.class, () -> instance.counterRangeAssignment(new CounterRangeAssignmentRequestModel(2, "A", new ArrayList<>(List.of(new String[]{"AA123", "AA124", "AA125"})), "AmericanAirlines")));
+        Assertions.assertThrows(FlightDoesNotExistsException.class, () -> instance.counterRangeAssignment(new CounterRangeAssignmentRequestModel(2, "C", new ArrayList<>(List.of(new String[]{"AA123", "AA124", "ABC00"})), "AmericanAirlines")));
+        Assertions.assertThrows(FlightExistsForOtherAirlineException.class, () -> instance.counterRangeAssignment(new CounterRangeAssignmentRequestModel(2, "C", new ArrayList<>(List.of(new String[]{"AA123", "AA124", "AC987"})), "AmericanAirlines")));
+        instance.counterRangeAssignment(new CounterRangeAssignmentRequestModel(2, "B", new ArrayList<>(List.of(new String[]{"AC987"})), "AirCanada"));
+        Assertions.assertThrows(FlightStatusException.class, () -> instance.counterRangeAssignment(new CounterRangeAssignmentRequestModel(2, "C", new ArrayList<>(List.of(new String[]{"AC987"})), "AirCanada")));
+        instance.freeCounterRange(new FreeCounterRangeRequestModel( "B", 1, "AirCanada"));
+        Assertions.assertThrows(FlightStatusException.class, () -> instance.counterRangeAssignment(new CounterRangeAssignmentRequestModel(2, "C", new ArrayList<>(List.of(new String[]{"AC987"})), "AirCanada")));
+        Assertions.assertDoesNotThrow(() -> instance.counterRangeAssignment(new CounterRangeAssignmentRequestModel(2, "C", new ArrayList<>(List.of(new String[]{"AA123", "AA124", "AA125"})), "AmericanAirlines")));
+    }
+    @Test
     void passengerCheckInTest() {
         instance.addSector("C");
         instance.addCountersToSector("C", 3);
