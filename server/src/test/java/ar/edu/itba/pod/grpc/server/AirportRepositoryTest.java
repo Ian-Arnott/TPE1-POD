@@ -1,7 +1,9 @@
 package ar.edu.itba.pod.grpc.server;
 
 import ar.edu.itba.pod.grpc.server.exeptions.*;
+import ar.edu.itba.pod.grpc.server.models.requests.CounterRangeAssignmentRequestModel;
 import ar.edu.itba.pod.grpc.server.models.requests.ManifestRequestModel;
+import ar.edu.itba.pod.grpc.server.models.requests.PassengerCheckInRequestModel;
 import ar.edu.itba.pod.grpc.server.models.response.AddCountersResponseModel;
 import ar.edu.itba.pod.grpc.server.repository.AirportRepository;
 import org.junit.jupiter.api.Assertions;
@@ -9,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class AirportRepositoryTest {
     private static AirportRepository instance;
@@ -17,6 +20,7 @@ class AirportRepositoryTest {
     public void init() {
         instance = new AirportRepository();
     }
+
     @Test
     void addSectorTest() {
         Assertions.assertDoesNotThrow(() -> instance.addSector("C"));
@@ -46,5 +50,72 @@ class AirportRepositoryTest {
                 FlightExistsForOtherAirlineException.class,
                 () -> instance.manifest(new ManifestRequestModel("XYZ234", "AC987", "AmericanAirlines"))
         );
+    }
+
+    @Test
+    void passengerCheckinTest() {
+        instance.addSector("C");
+        instance.addCountersToSector("C", 3);
+        instance.manifest(new ManifestRequestModel("ABC124", "AC987", "AirCanada"));
+
+        instance.manifest(new ManifestRequestModel("ABC123", "AC987", "AirCanada"));
+        instance.manifest(new ManifestRequestModel("ABC122", "AC987", "AirCanada"));
+        instance.manifest(new ManifestRequestModel("ABC121", "AC987", "AirCanada"));
+        Assertions.assertDoesNotThrow(
+                () -> instance.fetchCounter("ABC123")
+        );
+        instance.counterRangeAssignment(new CounterRangeAssignmentRequestModel(2, "C", "AC987".lines().toList(),"AirCanada"));
+        Assertions.assertDoesNotThrow(
+                () -> instance.passengerCheckIn(new PassengerCheckInRequestModel(new AtomicInteger(1),"C","ABC123"))
+        );
+        Assertions.assertDoesNotThrow(
+                () -> instance.passengerStatus("ABC123")
+        );
+    }
+
+    @Test
+    void registerAirlineTest() {
+        instance.addSector("C");
+        instance.addCountersToSector("C", 3);
+        instance.manifest(new ManifestRequestModel("ABC124", "AC987", "AirCanada"));
+
+        Assertions.assertDoesNotThrow(
+                () -> instance.registerForNotifications("AirCanada")
+        );
+
+    }
+
+    @Test
+    void queryCountersTest() {
+        instance.addSector("C");
+        instance.manifest(new ManifestRequestModel("ABC124", "AC987", "AirCanada"));
+
+        try {
+            instance.getCountersQuery("C");
+        } catch (NoCountersAddedException e ) {
+            Assertions.assertTrue(true);
+        }
+        instance.addCountersToSector("C", 3);
+        Assertions.assertDoesNotThrow(()-> instance.getCountersQuery("C"));
+
+    }
+
+    @Test
+    void bookingQueryTest() {
+        instance.addSector("C");
+        instance.addCountersToSector("C", 3);
+        instance.manifest(new ManifestRequestModel("ABC123", "AC987", "AirCanada"));
+
+        try {
+            instance.getBookingsQuery("C","");
+        } catch (NoBookingsCheckedInException e) {
+            Assertions.assertTrue(true);
+        }
+
+        instance.counterRangeAssignment(new CounterRangeAssignmentRequestModel(1, "C", "AC987".lines().toList(),"AirCanada"));
+        instance.passengerCheckIn(new PassengerCheckInRequestModel(new AtomicInteger(1),"C","ABC123"));
+        instance.performCounterCheckIn("C",1,"AirCanada");
+
+        Assertions.assertDoesNotThrow(()-> instance.getBookingsQuery("C",""));
     }
 }
