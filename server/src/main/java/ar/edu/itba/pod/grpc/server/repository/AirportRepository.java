@@ -37,7 +37,7 @@ public class AirportRepository {
 
     private int lastCounterAdded;
 
-    public AirportRepository() {
+    AirportRepository() {
         sectorMap = new ConcurrentHashMap<>();
 
         this.airlines = new ConcurrentHashMap<>();
